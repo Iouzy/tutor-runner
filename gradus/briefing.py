@@ -17,6 +17,14 @@ DIRETIVA = {
     "explicar": "ele explica o código dele linha a linha; tu só perguntas.",
 }
 
+# Per-slot ceilings. Named because `gradus lint` adds them up: if the parts can
+# outgrow the whole, a bad day kills a study session mid-exercise.
+TETO_PERFIL = 1100
+TETO_NO = 700
+TETO_FRAQUEZAS = 400
+TETO_ERROS = 450
+MARGEM_BILHETE = 120        # the note's cap is the JSON's; the slot adds its wrapper
+
 # The only paths a briefing may ever draw from. The archive is not here, and a
 # test asserts it never will be: that omission is the whole context economy.
 FONTES_PERMITIDAS = ("perfil.md", "grafo.toml", "curso.toml", "estado.json", "telemetria/")
@@ -97,7 +105,7 @@ def build(
     revisao: bool = False,
     tipo: str = "construcao",
 ) -> Briefing:
-    perfil = Slot("perfil", course.perfil, teto=1100)
+    perfil = Slot("perfil", course.perfil, teto=TETO_PERFIL)
 
     cabecalho = "REVISÃO (já esteve automático)" if revisao else "EXERCÍCIO"
     linhas = [
@@ -115,22 +123,22 @@ def build(
             f"{c.get('entrada', '')} → {c.get('saida', '')}" for c in ancora.controlo
         )
         linhas.append(f"Controlo (verifica com isto, não a olho): {controlo}")
-    no_slot = Slot("nó", "\n".join(linhas), teto=700)
+    no_slot = Slot("nó", "\n".join(linhas), teto=TETO_NO)
 
     ativas = state.fraquezas_ativas(conhecidas=set(course.weaknesses))
     if ativas:
         corpo = ["## Fraquezas ativas — mete-as no exercício se fizer sentido"]
         corpo += [f"- {course.weaknesses[w].nome}: {course.weaknesses[w].descricao}" for w in ativas]
-        fraquezas = Slot("fraquezas", "\n".join(corpo), teto=400)
+        fraquezas = Slot("fraquezas", "\n".join(corpo), teto=TETO_FRAQUEZAS)
     else:
-        fraquezas = Slot("fraquezas", "", teto=400)
+        fraquezas = Slot("fraquezas", "", teto=TETO_FRAQUEZAS)
 
     erros = _erros_recentes(telemetria, node.id)
     if erros:
         corpo = ["## Últimos erros dele neste tópico (em bruto)"] + [f"- {e}" for e in erros]
-        erros_slot = Slot("erros", "\n".join(corpo), teto=450)
+        erros_slot = Slot("erros", "\n".join(corpo), teto=TETO_ERROS)
     else:
-        erros_slot = Slot("erros", "", teto=450)
+        erros_slot = Slot("erros", "", teto=TETO_ERROS)
 
     slots = [perfil, no_slot, fraquezas, erros_slot]
 
@@ -143,7 +151,7 @@ def build(
         ]
         if handoff.nao_repetir:
             corpo.append(f"- evita: {handoff.nao_repetir}")
-        slots.append(Slot("bilhete", "\n".join(corpo), teto=course.teto_bilhete_bytes + 120))
+        slots.append(Slot("bilhete", "\n".join(corpo), teto=course.teto_bilhete_bytes + MARGEM_BILHETE))
 
     briefing = Briefing(slots=slots, teto_total=course.teto_briefing_bytes)
     briefing.check()

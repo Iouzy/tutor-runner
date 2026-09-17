@@ -142,6 +142,30 @@ def cmd_briefing(args) -> int:
     return 0
 
 
+def cmd_lint(args) -> int:
+    """Says what will break before a study session finds out. Touches nothing."""
+    from . import lint as lint_mod
+
+    try:
+        curso, _ = _course(args)
+    except CourseError as exc:
+        print(f"{VERM}erro{RESET}  curso.toml  {exc}")
+        return 1
+
+    achados = lint_mod.check(curso)
+    print(f"\n{BOLD}gradus lint{RESET} · curso {curso.nome}\n")
+    for f in achados:
+        cor = VERM if f.nivel == lint_mod.ERRO else LARANJA
+        print(f"{cor}{f.nivel:6}{RESET}{BOLD}{f.onde}{RESET}  {f.problema}")
+        print(f"       {DIM}→ {f.conserto}{RESET}")
+    erros = sum(1 for f in achados if f.nivel == lint_mod.ERRO)
+    avisos = len(achados) - erros
+    if not achados:
+        print(f"{VERDE}sem nada a apontar.{RESET}")
+    print(f"\n{erros} erro(s) · {avisos} aviso(s)\n")
+    return 1 if erros else 0
+
+
 def cmd_regenerar(args) -> int:
     curso, curso_dir = _course(args)
     work = _work(args)
@@ -162,6 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     d.set_defaults(func=cmd_demo)
     sub.add_parser("proximo", help="que exercício vem a seguir, e porquê").set_defaults(func=cmd_proximo)
     sub.add_parser("briefing", help="imprime o contexto exato que a próxima sessão recebe").set_defaults(func=cmd_briefing)
+    sub.add_parser("lint", help="o que rebenta neste curso antes de o usar").set_defaults(func=cmd_lint)
     sub.add_parser("estado", help="regenera e mostra ESTADO.md").set_defaults(func=cmd_regenerar)
     sub.add_parser("historico", help="regenera e mostra HISTORICO.md").set_defaults(func=cmd_regenerar)
 

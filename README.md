@@ -13,6 +13,7 @@ engordar. O estado durável é o exercício, não a conversa.
 python3 -m gradus demo --limpar   # um dia de estudo inteiro, sem modelo e sem rede
 python3 -m gradus proximo         # que exercício vem a seguir, e porquê
 python3 -m gradus briefing        # o contexto exato que a próxima sessão recebe
+python3 -m gradus lint            # o que rebenta neste curso antes de o usar
 python3 -m gradus estado          # regenera ESTADO.md
 python3 -m gradus historico       # regenera HISTORICO.md
 python3 -m unittest discover -s tests -t .
@@ -55,6 +56,15 @@ seguidas — prática em bloco ensina a forma da sessão, não o nó.
 
 Um exercício passado sobe **um** degrau. Só o simulador (dez previsões seguidas
 certas) leva um nó a `automático`. Ter commit não é saber.
+
+## Escrever um curso novo
+
+`gradus lint` lê o curso e responde à única pergunta que interessa antes de o
+usar: **no pior dia que este curso pode ter, ainda funciona?** Confere os campos
+dos comandos, os grupos do `regex_erro`, as âncoras (linguagem certa, tipo que o
+nó pede, valores de controlo completos) e soma o briefing mais gordo possível —
+perfil, nó, fraquezas todas ativas, erros no teto e bilhete de retoma — contra o
+teto. Não corre nada: tocar na máquina é trabalho do `doctor`.
 
 ## Agnóstico
 
