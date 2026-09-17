@@ -72,3 +72,40 @@ class TestMaquina(unittest.TestCase):
     def test_escrita_numa_pasta_que_nao_se_pode_criar(self):
         c = doctor._escrita(Path("/proc/nao-da-para-escrever-aqui"))
         self.assertFalse(c.ok)
+
+
+class TestEncontrarOClaude(unittest.TestCase):
+    """Um instalador que escreve no .zshrc não serve de nada a um subprocesso."""
+
+    def test_o_path_serve(self):
+        from gradus.adapter import encontrar
+
+        with mock.patch("shutil.which", return_value="/usr/bin/claude"):
+            self.assertEqual(encontrar("claude"), "/usr/bin/claude")
+
+    def test_a_variavel_ganha_ao_path(self, ):
+        from gradus.adapter import encontrar
+
+        with mock.patch.dict(os.environ, {"GRADUS_CLAUDE": __file__}):
+            self.assertEqual(encontrar("claude"), __file__)
+
+    def test_uma_variavel_que_aponta_para_o_nada_nao_serve(self):
+        from gradus.adapter import encontrar
+
+        with mock.patch.dict(os.environ, {"GRADUS_CLAUDE": "/nao/existe/claude"}):
+            self.assertIsNone(encontrar("claude"))
+
+    def test_sem_nada_em_lado_nenhum(self):
+        from gradus.adapter import encontrar
+
+        with mock.patch.dict(os.environ, {}, clear=True), \
+             mock.patch("shutil.which", return_value=None), \
+             mock.patch("gradus.adapter.CAMINHOS_PROVAVEIS", ()):
+            self.assertIsNone(encontrar("claude"))
+
+    def test_sem_claude_o_doctor_bloqueia(self):
+        with mock.patch("gradus.doctor.encontrar", return_value=None):
+            c = doctor._claude()
+        self.assertFalse(c.ok)
+        self.assertEqual(c.nivel, doctor.ERRO)
+        self.assertIn("GRADUS_CLAUDE", c.conserto)

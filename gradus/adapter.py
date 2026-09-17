@@ -16,6 +16,35 @@ import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass, field
+from pathlib import Path
+
+# Onde o Claude Code costuma ficar quando não está no PATH da shell que abriu o
+# gradus — um instalador que escreve no .zshrc não serve de nada a um subprocesso.
+CAMINHOS_PROVAVEIS = (
+    "~/.claude/local/claude",
+    "~/.local/bin/claude",
+    "/usr/local/bin/claude",
+    "/opt/homebrew/bin/claude",
+    "~/.npm-global/bin/claude",
+    "~/.volta/bin/claude",
+    "~/.bun/bin/claude",
+)
+
+
+def encontrar(nome: str = "claude") -> str | None:
+    """O PATH primeiro, depois os sítios do costume. `GRADUS_CLAUDE` ganha a tudo,
+    para quem o tem noutro sítio não ter de editar código nenhum."""
+    posto = os.environ.get("GRADUS_CLAUDE")
+    if posto:
+        return posto if Path(posto).expanduser().exists() else None
+    achado = shutil.which(nome)
+    if achado:
+        return achado
+    for caminho in CAMINHOS_PROVAVEIS:
+        alvo = Path(caminho).expanduser()
+        if alvo.exists():
+            return str(alvo)
+    return None
 
 
 class ClaudeError(Exception):
@@ -62,11 +91,13 @@ class Claude:
                 "a ANTHROPIC_API_KEY está posta — assim cada sessão é paga à API em vez "
                 "de sair da subscrição; faz `unset ANTHROPIC_API_KEY` e abre outro terminal"
             )
-        if shutil.which(self.comando[0]) is None and not os.path.exists(self.comando[0]):
+        binario = encontrar(self.comando[0]) if len(self.comando) == 1 else self.comando[0]
+        if binario is None:
             raise ClaudeError(
-                f"'{self.comando[0]}' não está no PATH — instala o Claude Code, "
-                f"ou corre `gradus doctor` para ver o que falta"
+                f"não encontrei o '{self.comando[0]}' — instala o Claude Code, ou, se já o "
+                f"tens, diz onde está: export GRADUS_CLAUDE=$(command -v claude)"
             )
+        self.comando[0] = binario
         cmd = [
             *self.comando, "-p", "--output-format", "json",
             # No Bash, no file edits: the model teaches, the program measures.

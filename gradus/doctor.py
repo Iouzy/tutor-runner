@@ -17,6 +17,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from .adapter import encontrar
 from .model import Course
 from .telemetry import extrair_erro
 
@@ -62,11 +63,15 @@ def _binario(campo: str, comando: str, extensao: str) -> Check:
 
 
 def _claude() -> Check:
-    caminho = shutil.which("claude")
+    """Sem isto não há sessão nenhuma, por isso é um erro e não um aviso: um
+    arranque que diz «0 por resolver» e depois não arranca é pior do que nada."""
+    caminho = encontrar("claude")
     return Check(
-        "claude", caminho is not None, caminho or "não está no PATH",
-        "" if caminho else "instala o Claude Code — é ele que corre cada sessão fria",
-        nivel=AVISO,
+        "claude", caminho is not None, caminho or "não o encontrei",
+        "" if caminho else (
+            "instala o Claude Code; se já o tens mas noutro sítio, diz onde: "
+            "export GRADUS_CLAUDE=$(command -v claude)"
+        ),
     )
 
 
