@@ -184,9 +184,9 @@ class EcraLinguagem(tk.Frame):
 
     def _cartao(self, pai, disponivel):
         caixa = pecas.cartao(pai)
-        dentro = tk.Frame(caixa, bg=tema.PAINEL)
-        dentro.pack(fill="both", expand=True, padx=26, pady=24)
-        dentro.config(width=260)
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=16, pady=14)
+        dentro.config(width=250)
         dentro.pack_propagate(False)
         pecas.rotulo(dentro, disponivel.linguagem or "curso").pack(fill="x")
         pecas.titulo(dentro, disponivel.nome, "medio").pack(fill="x", pady=(8, 8))
@@ -201,8 +201,8 @@ class EcraLinguagem(tk.Frame):
 
     def _aviso_fontes(self, pai):
         caixa = pecas.cartao(pai)
-        dentro = tk.Frame(caixa, bg=tema.PAINEL)
-        dentro.pack(fill="x", padx=20, pady=16)
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=12, pady=8)
         pecas.paragrafo(
             dentro,
             "Faltam as fontes do desenho, por isso isto está com a fonte do sistema. "
@@ -277,8 +277,8 @@ class EcraPerfil(tk.Frame):
         pecas.espaco(dentro).pack(fill="both", expand=True)
         nota = pecas.cartao(dentro)
         nota.pack(fill="x")
-        corpo_nota = tk.Frame(nota, bg=tema.PAINEL)
-        corpo_nota.pack(fill="x", padx=16, pady=14)
+        corpo_nota = nota.dentro
+        corpo_nota.pack_configure(padx=8, pady=6)
         pecas.paragrafo(
             corpo_nota,
             "As respostas viram o aluno/perfil.md — cerca de 800 B que vão dentro de "
@@ -310,8 +310,11 @@ class EcraPerfil(tk.Frame):
         else:
             self.lista = None
             pecas.rotulo(dentro, "a tua resposta").pack(fill="x", pady=(26, 8))
-            self.caixa = pecas.caixa_de_texto(dentro, altura=7)
-            self.caixa.pack(fill="x")
+            moldura = pecas.moldura(dentro)
+            moldura.pack(fill="x")
+            self.caixa = pecas.caixa_de_texto(moldura.dentro, altura=5)
+            self.caixa.pack(fill="both", expand=True)
+            pecas.acender(moldura, self.caixa)
             self.caixa.insert("1.0", guardada)
             self.caixa.bind("<KeyRelease>", lambda _e: self._contar())
             medida = tk.Frame(dentro, bg=tema.FUNDO)
@@ -331,8 +334,8 @@ class EcraPerfil(tk.Frame):
 
     def _porque(self, pai):
         caixa = pecas.cartao(pai)
-        dentro = tk.Frame(caixa, bg=tema.PAINEL)
-        dentro.pack(fill="x", padx=18, pady=16)
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=10, pady=8)
         pecas.rotulo(dentro, "porque é que isto importa", cor=tema.VERDE).pack(fill="x", pady=(0, 8))
         pecas.paragrafo(
             dentro,
@@ -440,8 +443,8 @@ class EcraVerificacao(tk.Frame):
         avisa = not check.ok and not bloqueia
         marca, cor = ("✓", tema.VERDE) if check.ok else (("✗", tema.LARANJA) if bloqueia else ("!", tema.APAGADO))
         caixa = pecas.cartao(self.lista, borda=tema.LARANJA if bloqueia else tema.LINHA)
-        dentro = tk.Frame(caixa, bg=tema.PAINEL)
-        dentro.pack(fill="x", padx=18, pady=10)
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=10, pady=4)
         cabeca = tk.Frame(dentro, bg=tema.PAINEL)
         cabeca.pack(fill="x")
         tk.Label(
@@ -471,8 +474,8 @@ class EcraVerificacao(tk.Frame):
     def _painel_regex(self, check):
         """A verificação que interessa fica sozinha, com o tamanho que merece."""
         caixa = pecas.cartao(self.destaque, borda=tema.VERDE if check.ok else tema.LARANJA)
-        dentro = tk.Frame(caixa, bg=tema.PAINEL)
-        dentro.pack(fill="both", expand=True, padx=22, pady=20)
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=14, pady=12)
         cabeca = tk.Frame(dentro, bg=tema.PAINEL)
         cabeca.pack(fill="x")
         tk.Label(
@@ -577,14 +580,16 @@ class EcraEstudo(tk.Frame):
 
     def _conversa(self, pai):
         caixa = pecas.cartao(pai)
-        cabeca = tk.Frame(caixa, bg=tema.PAINEL)
-        cabeca.pack(fill="x", padx=20, pady=(16, 0))
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=8, pady=8)
+        cabeca = tk.Frame(dentro, bg=tema.PAINEL)
+        cabeca.pack(fill="x", padx=12, pady=(8, 0))
         pecas.rotulo(cabeca, "conversa").pack(side="left")
         self.etiqueta_tipo = pecas.mono(cabeca, "")
         self.etiqueta_tipo.pack(side="right")
 
         self.painel = pecas.Painel(
-            caixa, "Carrega em «Começar exercício».\nO gradus escolhe o próximo e abre a sessão.",
+            dentro, "Carrega em «Começar exercício».\nO gradus escolhe o próximo e abre a sessão.",
             altura=10,
         )
         self.painel.pack(fill="both", expand=True, pady=(8, 0))
@@ -593,10 +598,13 @@ class EcraEstudo(tk.Frame):
         self.painel.texto.tag_configure("aluno", foreground=tema.VERDE, spacing3=12)
         self.painel.texto.tag_configure("sistema", foreground=tema.APAGADO, spacing3=12)
 
-        baixo = tk.Frame(caixa, bg=tema.PAINEL)
-        baixo.pack(fill="x", padx=16, pady=16)
-        self.entrada = pecas.entrada(baixo)
-        self.entrada.pack(side="left", fill="x", expand=True, ipady=9, padx=(0, 10))
+        baixo = tk.Frame(dentro, bg=tema.PAINEL)
+        baixo.pack(fill="x", padx=12, pady=(8, 4))
+        moldura = pecas.moldura(baixo)
+        moldura.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.entrada = pecas.entrada(moldura.dentro)
+        self.entrada.pack(fill="x", ipady=7)
+        pecas.acender(moldura, self.entrada)
         self.entrada.bind("<Return>", lambda _: self._enviar())
         self.botao_enviar = pecas.Botao(baixo, "Enviar", self._enviar, estado="disabled")
         self.botao_enviar.pack(side="left")
@@ -604,8 +612,10 @@ class EcraEstudo(tk.Frame):
 
     def _editor(self, pai):
         caixa = pecas.cartao(pai)
-        cabeca = tk.Frame(caixa, bg=tema.PAINEL)
-        cabeca.pack(fill="x", padx=20, pady=(16, 10))
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=8, pady=8)
+        cabeca = tk.Frame(dentro, bg=tema.PAINEL)
+        cabeca.pack(fill="x", padx=12, pady=(8, 10))
         esquerda = tk.Frame(cabeca, bg=tema.PAINEL)
         esquerda.pack(side="left")
         pecas.rotulo(esquerda, "exercício").pack(anchor="w")
@@ -619,25 +629,27 @@ class EcraEstudo(tk.Frame):
         self.botao_guardar = pecas.Botao(cabeca, "Guardar", self._guardar, estado="disabled")
         self.botao_guardar.pack(side="right", padx=10)
 
-        self.editor = pecas.caixa_de_texto(caixa, altura=16, mono_=True)
+        self.editor = pecas.caixa_de_texto(dentro, altura=16, mono_=True)
         self.editor.config(highlightthickness=0)
-        self.editor.pack(fill="both", expand=True, padx=1, pady=(0, 1))
+        self.editor.pack(fill="both", expand=True)
         self.editor.insert("1.0", "\n  o exercício aparece aqui quando começares.\n")
         self.editor.config(state="disabled")
         return caixa
 
     def _saida(self, pai):
         caixa = pecas.cartao(pai)
-        cabeca = tk.Frame(caixa, bg=tema.PAINEL)
-        cabeca.pack(fill="x", padx=20, pady=(16, 8))
+        dentro = caixa.dentro
+        dentro.pack_configure(padx=8, pady=8)
+        cabeca = tk.Frame(dentro, bg=tema.PAINEL)
+        cabeca.pack(fill="x", padx=12, pady=(8, 8))
         pecas.rotulo(cabeca, "compilador").pack(side="left")
         self.etiqueta_tentativas = pecas.mono(cabeca, "")
         self.etiqueta_tentativas.pack(side="right")
         self.saida = pecas.Painel(
-            caixa, "ainda não compilaste nada.\ncada tentativa vai para telemetria/ sozinha.",
+            dentro, "ainda não compilaste nada.\ncada tentativa vai para telemetria/ sozinha.",
             fonte_=tema.CODIGO_PEQUENO, cor=tema.TEXTO, fundo=tema.FUNDO, altura=6,
         )
-        self.saida.pack(fill="both", expand=True, padx=1, pady=(0, 1))
+        self.saida.pack(fill="both", expand=True)
         self.saida.texto.tag_configure("erro", foreground=tema.LARANJA)
         self.saida.texto.tag_configure("ok", foreground=tema.VERDE)
         self.saida.texto.tag_configure("comando", foreground=tema.APAGADO)
@@ -789,7 +801,7 @@ class EcraEstudo(tk.Frame):
         ligado = "normal" if not ocupado and a_decorrer else "disabled"
         for b in (self.botao_compilar, self.botao_guardar, self.botao_cortar, self.botao_enviar):
             b.estado(ligado)
-        self.botao_principal.config(text="Passou" if a_decorrer else "Começar exercício")
+        self.botao_principal.por_texto("Passou" if a_decorrer else "Começar exercício")
         self.botao_principal.estado("disabled" if ocupado else "normal")
         self.editor.config(state="normal" if a_decorrer else "disabled")
         tipo = NOMES_TIPO.get(self.estudo.abertura.choice.tipo, "") if a_decorrer else ""
@@ -836,7 +848,7 @@ class JanelaSimulador(tk.Toplevel):
         caixa = pecas.cartao(self)
         caixa.pack(fill="both", expand=True, padx=28, pady=16)
         self.codigo = tk.Text(
-            caixa, bg=tema.PAINEL, fg=tema.TEXTO, font=pecas.fonte(tema.CODIGO_PEQUENO),
+            caixa.dentro, bg=tema.PAINEL, fg=tema.TEXTO, font=pecas.fonte(tema.CODIGO_PEQUENO),
             relief="flat", bd=0, padx=18, pady=16, wrap="none", state="disabled",
             highlightthickness=0,
         )
@@ -844,8 +856,11 @@ class JanelaSimulador(tk.Toplevel):
 
         baixo = tk.Frame(self, bg=tema.FUNDO)
         baixo.pack(fill="x", padx=28)
-        self.entrada = pecas.entrada(baixo)
-        self.entrada.pack(side="left", fill="x", expand=True, ipady=9, padx=(0, 10))
+        moldura = pecas.moldura(baixo)
+        moldura.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.entrada = pecas.entrada(moldura.dentro)
+        self.entrada.pack(fill="x", ipady=7)
+        pecas.acender(moldura, self.entrada)
         self.entrada.bind("<Return>", lambda _: self._responder())
         pecas.Botao(baixo, "Responder", self._responder, papel="principal").pack(side="left")
 
