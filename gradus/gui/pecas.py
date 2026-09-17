@@ -13,6 +13,18 @@ import tkinter as tk
 from . import tema
 
 
+def quebrar(rotulo):
+    """Um Label não quebra sozinho: sem isto a pergunta mais comprida perde as
+    últimas palavras pela direita fora, e é a pergunta que ele tem de ler. Numa
+    DPI alta acontece mesmo a textos que cabiam no desenho."""
+    def ajustar(evento):
+        if evento.width > 1 and int(rotulo.cget("wraplength")) != evento.width:
+            rotulo.config(wraplength=evento.width)
+
+    rotulo.bind("<Configure>", ajustar)
+    return rotulo
+
+
 def fonte(spec):
     familia, *resto = spec
     return (tema.ALTERNATIVAS.get(familia, (familia,))[0], *resto)
@@ -38,18 +50,21 @@ def espaco(pai, altura=0) -> tk.Frame:
 
 # --- texto -----------------------------------------------------------------
 def titulo(pai, texto, tamanho="medio", cor=None, largura=0) -> tk.Label:
+    """`largura` 0 = quebra sozinho pela largura que lhe derem."""
     spec = {"grande": tema.TITULO_GRANDE, "medio": tema.TITULO, "pequeno": tema.TITULO_PEQUENO}[tamanho]
-    return tk.Label(
+    etiqueta = tk.Label(
         pai, text=texto, bg=pai["bg"], fg=cor or tema.TEXTO, font=fonte(spec),
         anchor="w", justify="left", wraplength=largura,
     )
+    return etiqueta if largura else quebrar(etiqueta)
 
 
-def paragrafo(pai, texto, cor=None, fonte_=None, largura=680) -> tk.Label:
-    return tk.Label(
+def paragrafo(pai, texto, cor=None, fonte_=None, largura=0) -> tk.Label:
+    etiqueta = tk.Label(
         pai, text=texto, bg=pai["bg"], fg=cor or tema.APAGADO, font=fonte(fonte_ or tema.INTERFACE),
         anchor="w", justify="left", wraplength=largura,
     )
+    return etiqueta if largura else quebrar(etiqueta)
 
 
 def rotulo(pai, texto, cor=None) -> tk.Label:
@@ -176,7 +191,7 @@ class Painel(tk.Frame):
         super().__init__(pai, bg=fundo or tema.PAINEL)
         self.vazio = vazio
         self.texto = tk.Text(
-            self, height=altura,
+            self, height=altura, width=1,      # estica: quem manda é o painel, não o texto
             bg=fundo or tema.PAINEL, fg=cor or tema.TEXTO, font=fonte(fonte_ or tema.INTERFACE),
             relief="flat", bd=0, padx=20, pady=18, wrap="word", state="disabled",
             highlightthickness=0, insertbackground=tema.LARANJA, spacing1=2, spacing3=4,
@@ -204,7 +219,7 @@ class Painel(tk.Frame):
 
 def caixa_de_texto(pai, altura=7, mono_=False) -> tk.Text:
     return tk.Text(
-        pai, height=altura, bg=tema.PAINEL, fg=tema.TEXTO, insertbackground=tema.LARANJA,
+        pai, height=altura, width=1, bg=tema.PAINEL, fg=tema.TEXTO, insertbackground=tema.LARANJA,
         font=fonte(tema.CODIGO if mono_ else tema.INTERFACE), relief="flat", bd=0,
         padx=18, pady=14, wrap="none" if mono_ else "word",
         highlightbackground=tema.LINHA, highlightcolor=tema.LARANJA, highlightthickness=1,

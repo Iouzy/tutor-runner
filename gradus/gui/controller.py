@@ -319,7 +319,13 @@ class Simulacao:
         self.atual: simulator_mod.Previsao | None = None
 
     def proxima(self) -> simulator_mod.Previsao | None:
-        codigo = self.workspace.caminho(self.exercicio).read_text(encoding="utf-8")
+        alvo = self.workspace.caminho(self.exercicio)
+        if not alvo.exists():
+            raise CourseError(
+                f"não há nenhum {self.exercicio} em {self.workspace.raiz} — o simulador "
+                f"pergunta sobre código que tu escreveste, e esse ficheiro ainda não existe"
+            )
+        codigo = alvo.read_text(encoding="utf-8")
         previsoes = simulator_mod.gerar(self.course, self.exercicio, codigo, quantas=1)
         self.atual = previsoes[0] if previsoes else None
         return self.atual

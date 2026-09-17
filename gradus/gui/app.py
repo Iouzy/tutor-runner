@@ -33,12 +33,13 @@ class App(tk.Tk):
         self.trabalho_raiz = trabalho
         self.seco = seco
         self.title("gradus")
-        self.geometry("1280x860")
-        self.minsize(1100, 720)
         self.configure(bg=tema.FUNDO)
         self.respostas: dict[str, str] = {}
         self.config_atual = config_mod.load(raiz)
         self.fontes_em_falta = _fixar_fontes(self)
+        self.largura, self.altura = self.cabe(1280, 860)
+        self.geometry(f"{self.largura}x{self.altura}")
+        self.minsize(*self.cabe(1040, 700))
         self.container = tk.Frame(self, bg=tema.FUNDO)
         self.container.pack(fill="both", expand=True)
         self.mostrar(EcraLinguagem if self.config_atual is None else EcraEstudo)
@@ -46,7 +47,33 @@ class App(tk.Tk):
     def mostrar(self, classe, **kw) -> None:
         for filho in self.container.winfo_children():
             filho.destroy()
-        classe(self.container, self, **kw).pack(fill="both", expand=True)
+        ecra = classe(self.container, self, **kw)
+        ecra.pack(fill="both", expand=True)
+        self.crescer(ecra)
+
+    def cabe(self, largura: int, altura: int) -> tuple[int, int]:
+        """Nunca maior do que o ecrã: uma janela que não cabe é uma janela com o
+        rodapé de fora, e o rodapé é onde se vê o que a sessão está a custar."""
+        return (
+            min(largura, int(self.winfo_screenwidth() * 0.96)),
+            min(altura, int(self.winfo_screenheight() * 0.90)),
+        )
+
+    def crescer(self, ecra: tk.Widget) -> None:
+        """A janela é medida em pixéis, mas quem desenha a letra é o servidor de
+        fontes, na DPI do ecrã. Num ecrã HiDPI o mesmo desenho pede o dobro dos
+        pixéis, o pack fica sem espaço e encolhe o rodapé e os botões a uma linha
+        de um pixel — botões que existem e em que ninguém consegue carregar. Por
+        isso a janela cresce até ao que o ecrã que está lá dentro pede. Nunca
+        encolhe: o tamanho do desenho é o mínimo, não o alvo."""
+        self.update_idletasks()
+        largura, altura = self.cabe(
+            max(self.largura, ecra.winfo_reqwidth()),
+            max(self.altura, ecra.winfo_reqheight()),
+        )
+        if (largura, altura) != (self.largura, self.altura):
+            self.largura, self.altura = largura, altura
+            self.geometry(f"{largura}x{altura}")
 
     # --- work off the main loop ------------------------------------------
     def em_fundo(self, funcao, quando_acabar) -> None:
@@ -778,7 +805,7 @@ class JanelaSimulador(tk.Toplevel):
     def __init__(self, pai, curso, trabalho: Path, node_id: str, exercicio: str) -> None:
         super().__init__(pai, bg=tema.FUNDO)
         self.title("gradus · simulador")
-        self.geometry("760x820")
+        self.geometry("%dx%d" % pai.app.cabe(760, 820))
         self.app = pai.app
         self.sim = Simulacao(curso, trabalho, node_id, exercicio)
 
@@ -816,6 +843,10 @@ class JanelaSimulador(tk.Toplevel):
 
         self.resposta = pecas.paragrafo(self, "", largura=690)
         self.resposta.pack(fill="x", padx=28, pady=20)
+        self.update_idletasks()
+        self.geometry("%dx%d" % pai.app.cabe(
+            max(760, self.winfo_reqwidth()), max(820, self.winfo_reqheight())
+        ))
         self._proxima()
 
     def _proxima(self) -> None:

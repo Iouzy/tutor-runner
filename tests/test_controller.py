@@ -205,3 +205,11 @@ class TestSimulacao(unittest.TestCase):
     def test_responder_sem_pergunta_na_mesa(self):
         with self.assertRaises(CourseError):
             self.sim.responder("3")
+
+    def test_ficheiro_que_nao_existe_diz_o_que_falta_em_vez_de_rebentar(self):
+        """`gradus simular --ficheiro X` com um X que ainda não foi escrito é o
+        caminho do README: tem de dar recado, não um traceback."""
+        sim = controller.Simulacao(self.curso, self.work, "base-listas", "nunca_escrito.py")
+        with self.assertRaises(CourseError) as erro:
+            sim.proxima()
+        self.assertIn("nunca_escrito.py", str(erro.exception))
