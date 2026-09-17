@@ -166,6 +166,22 @@ def cmd_lint(args) -> int:
     return 1 if erros else 0
 
 
+def cmd_abrir(args) -> int:
+    """A aplicação. É aqui que ele estuda; o resto dos comandos é para quem constrói."""
+    try:
+        from .gui.app import correr
+    except ImportError:
+        print(
+            f"{VERM}falta o tkinter{RESET} — é biblioteca padrão, mas o Ubuntu traz-no à parte:\n"
+            f"  sudo apt install python3-tk\n"
+            f"(no macOS: brew install python-tk)",
+            file=sys.stderr,
+        )
+        return 1
+    trabalho = Path(args.trabalho) if args.trabalho else None
+    return correr(RAIZ, trabalho, seco=args.seco)
+
+
 def cmd_doctor(args) -> int:
     """The only command that touches the machine. Every queixa traz o comando."""
     from . import doctor as doctor_mod
@@ -207,6 +223,9 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("proximo", help="que exercício vem a seguir, e porquê").set_defaults(func=cmd_proximo)
     sub.add_parser("briefing", help="imprime o contexto exato que a próxima sessão recebe").set_defaults(func=cmd_briefing)
     sub.add_parser("lint", help="o que rebenta neste curso antes de o usar").set_defaults(func=cmd_lint)
+    a = sub.add_parser("abrir", help="abre a aplicação (é isto que o aluno usa)")
+    a.add_argument("--seco", action="store_true", help="sem modelo nenhum: para ver a janela sem gastar uma sessão")
+    a.set_defaults(func=cmd_abrir)
     sub.add_parser("doctor", help="a máquina aguenta este curso? com o comando do conserto").set_defaults(func=cmd_doctor)
     sub.add_parser("estado", help="regenera e mostra ESTADO.md").set_defaults(func=cmd_regenerar)
     sub.add_parser("historico", help="regenera e mostra HISTORICO.md").set_defaults(func=cmd_regenerar)

@@ -73,17 +73,23 @@ def _regex(course: Course) -> list[Finding]:
 
 
 def _extensao(course: Course) -> list[Finding]:
+    achados = []
     if not course.extensao:
-        return [Finding(
+        achados.append(Finding(
             AVISO, "curso.toml", "extensao em falta",
             "põe extensao = \".py\" — o doctor precisa dela para escrever um ficheiro partido de propósito",
-        )]
-    if not course.extensao.startswith("."):
-        return [Finding(
+        ))
+    elif not course.extensao.startswith("."):
+        achados.append(Finding(
             ERRO, "curso.toml", f"extensao '{course.extensao}' não começa por ponto",
             f"escreve extensao = \".{course.extensao}\"",
-        )]
-    return []
+        ))
+    if course.estilo_ficheiro not in ("snake", "camel"):
+        achados.append(Finding(
+            ERRO, "curso.toml", f"estilo_ficheiro '{course.estilo_ficheiro}' não existe",
+            "usa \"snake\" (base_ciclos.py) ou \"camel\" (BaseCiclos.java, que o Java exige)",
+        ))
+    return achados
 
 
 def _verificacao(course: Course) -> list[Finding]:

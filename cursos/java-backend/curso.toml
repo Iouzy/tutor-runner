@@ -2,6 +2,7 @@ nome = "Java backend"
 linguagem = "java"
 base = "fundamentos"
 extensao = ".java"
+estilo_ficheiro = "camel"     # o nome do ficheiro tem de ser o nome da classe
 
 build = "javac -d out {ficheiro}"
 run = "java -cp out {classe}"

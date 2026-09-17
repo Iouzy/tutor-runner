@@ -10,6 +10,8 @@ engordar. O estado durável é o exercício, não a conversa.
 ## Correr
 
 ```bash
+python3 -m gradus abrir           # a aplicação — é isto que o aluno usa
+python3 -m gradus abrir --seco    # a mesma janela sem gastar uma sessão de modelo
 python3 -m gradus demo --limpar   # um dia de estudo inteiro, sem modelo e sem rede
 python3 -m gradus proximo         # que exercício vem a seguir, e porquê
 python3 -m gradus briefing        # o contexto exato que a próxima sessão recebe
@@ -21,6 +23,24 @@ python3 -m unittest discover -s tests -t .
 ```
 
 Python 3.11+ (tomllib). **Sem dependências**, por desenho.
+
+## A aplicação
+
+Uma janela em tkinter — biblioteca padrão, sem dependências. Conversa à
+esquerda, editor em cima à direita, saída do compilador em baixo, e um rodapé
+que diz sempre o que a sessão está a custar: a repartição do briefing em bytes,
+as fraquezas a treinar, e o contexto contra o teto.
+
+A linguagem escolhe-se no primeiro ecrã e o perfil em seis perguntas no
+segundo — quem está a aprender a programar não edita TOML, é o programa que o
+escreve. O terceiro ecrã é o `doctor`.
+
+**Compilar e correr** é um botão, não um comando: cada tentativa vai para
+`telemetria/` sozinha. Um wrapper de terminal só mede quando o aluno se lembra
+de o usar, e a coisa que este programa mede é precisamente o adiamento.
+
+Os exercícios ficam em `exercicios/`, ficheiros normais — quem quiser continua
+no nano.
 
 ## As três camadas
 
@@ -107,6 +127,9 @@ orçamento, esquema de eventos com validação, sensores de compilação, arquiv
 redação de segredos, geração de ESTADO.md e HISTORICO.md, e o ciclo de corte e
 arranque a frio — tudo exercitado por `gradus demo` com uma sessão falsa.
 
-O que **não** está feito: o lançador real (`claude -p` em sessão fria), o parser
-de transcrições a sério, o simulador de previsões, e o render HTML do arquivo.
-Nenhuma sessão de modelo foi alguma vez lançada por este código.
+O que **não** está feito: o render HTML do arquivo, e a geração de um curso novo
+a partir do ecrã (hoje escolhe-se entre os que existem em `cursos/`).
+
+**Nenhuma sessão de modelo foi alguma vez lançada por este código.** O
+adaptador do `claude -p` existe e está testado contra um duplo, nunca contra o
+binário a sério; a janela em tkinter nunca foi aberta por ninguém.

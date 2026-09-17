@@ -36,6 +36,17 @@ class Session(Protocol):
 
 
 @dataclass
+class Abertura:
+    """Everything a passage needs before anyone talks. The interface holds this
+    while the human works, and hands it back with the raw run at the end."""
+
+    choice: Choice
+    node: "object"
+    briefing: briefing_mod.Briefing
+    handoff: Handoff | None = None
+
+
+@dataclass
 class PassageReport:
     choice: Choice
     briefing: briefing_mod.Briefing
@@ -57,21 +68,33 @@ class Runner:
         self.arquivo = workdir / "arquivo"
         self.estado_path = workdir / "estado.json"
 
-    # --- one passage -----------------------------------------------------
-    def passage(self, session: Session, dia: str, handoff: Handoff | None = None) -> PassageReport | None:
+    # --- one passage, in two halves --------------------------------------
+    def abrir(self, dia: str, handoff: Handoff | None = None) -> Abertura | None:
+        """Chooses and builds. Costs nothing: no session has started yet."""
         st = state_mod.load(self.estado_path)
         choice = next_node(self.course, st, date.fromisoformat(dia))
         if choice is None:
             return None
         node = self.course.node(choice.node_id)
-
         bf = briefing_mod.build(
             self.course, st, node,
             telemetria=self.telemetria, handoff=handoff, revisao=choice.revisao,
             tipo=choice.tipo,
         )
+        return Abertura(choice=choice, node=node, briefing=bf, handoff=handoff)
 
-        raw = session.run(bf.texto, node.id, handoff)
+    def passage(self, session: Session, dia: str, handoff: Handoff | None = None) -> PassageReport | None:
+        abertura = self.abrir(dia, handoff)
+        if abertura is None:
+            return None
+        raw = session.run(abertura.briefing.texto, abertura.node.id, handoff)
+        return self.fechar(abertura, raw, dia)
+
+    def fechar(self, abertura: Abertura, raw: RawRun, dia: str) -> PassageReport:
+        """Measures, validates, writes the event, moves the pointer. Nothing here
+        asks the model anything: by now that session is dead."""
+        st = state_mod.load(self.estado_path)
+        choice, node, bf = abertura.choice, abertura.node, abertura.briefing
 
         if not raw.ja_registadas:
             for comp in raw.compilacoes:

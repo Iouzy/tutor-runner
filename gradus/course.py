@@ -138,6 +138,7 @@ def load(course_dir: Path, *, raiz: Path | None = None) -> Course:
         weaknesses=weaknesses,
         linguagem=curso.get("linguagem", ""),
         extensao=curso.get("extensao", ""),
+        estilo_ficheiro=curso.get("estilo_ficheiro", "snake"),
         teto_briefing_bytes=curso.get("teto_briefing_bytes", 2048),
         teto_bilhete_bytes=curso.get("teto_bilhete_bytes", 400),
         teto_contexto_kb=curso.get("teto_contexto_kb", 15.0),

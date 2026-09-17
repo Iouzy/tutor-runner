@@ -83,6 +83,7 @@ class Course:
     weaknesses: dict[str, Weakness]
     linguagem: str = ""
     extensao: str = ""
+    estilo_ficheiro: str = "snake"      # "snake" | "camel" (o Java exige camel)
     teto_briefing_bytes: int = 2048
     teto_bilhete_bytes: int = 400
     teto_contexto_kb: float = 15.0

@@ -171,3 +171,65 @@ DIA_TIPO = [
         juizos=[Judgement(fraqueza="buffer-scanner", tipo_duvida="sintaxe", resolvido_na_passagem=True)],
     ),
 ]
+
+
+class ConversaSeca:
+    """A dry stand-in for a real cold session, for trying the interface without
+    spending a single one. Same seam as `conversation.Conversa`."""
+
+    def __init__(self, briefing: str, node_id: str, exercicio: str, teto_kb: float = 15.0) -> None:
+        self.briefing = briefing
+        self.node_id = node_id
+        self.exercicio = exercicio
+        self.teto_kb = teto_kb
+        self.transcript: list[dict] = []
+        self.compilacoes: list[Compilation] = []
+        self.inicio = datetime.now()
+
+    def abrir(self) -> str:
+        self.transcript.append({"papel": "gradus", "texto": self.briefing})
+        return self._responder(
+            "(sessão seca: não há modelo nenhum do outro lado)\n"
+            "Olha para o enunciado e diz-me o que achas que o programa vai escrever."
+        )
+
+    def dizer(self, texto: str) -> str:
+        self.transcript.append({"papel": "aluno", "texto": texto})
+        return self._responder("Escreve isso no editor e carrega em Compilar e correr.")
+
+    def tentativa(self, attempt, codigo: str) -> str:
+        self.transcript.append({"papel": "aluno", "texto": f"```\n{codigo.strip()}\n```"})
+        self.compilacoes.append(
+            Compilation(t=datetime.now().strftime("%H:%M"), no=self.node_id,
+                        ficheiro=self.exercicio, erro=attempt.erro)
+        )
+        self.transcript.append({"papel": "sistema", "texto": attempt.erro or attempt.saida})
+        if attempt.erro:
+            return self._responder(f"O compilador diz: {attempt.erro}. Onde é que isso acontece?")
+        return self._responder("Correu. Compara o que saiu com o que tinhas previsto.")
+
+    def deve_cortar(self) -> bool:
+        return self.kb >= self.teto_kb
+
+    @property
+    def kb(self) -> float:
+        return sum(len(m["texto"].encode("utf-8")) for m in self.transcript) / 1024
+
+    def fechar(self, passou: bool) -> RawRun:
+        return RawRun(
+            transcript=list(self.transcript),
+            terminal="\n".join(m["texto"] for m in self.transcript if m["papel"] == "sistema"),
+            compilacoes=list(self.compilacoes),
+            exercicio=self.exercicio,
+            passou=passou,
+            kb_contexto=round(self.kb, 1),
+            duracao_min=max(1, int((datetime.now() - self.inicio).total_seconds() // 60)),
+            handoff=None if passou else Handoff(onde_ficou="sessão seca", ultimo_erro="", ja_explicado=[]),
+            juizos=[],          # uma sessão seca não declara nada: ninguém observou nada
+            duvidas_novas=[],
+            ja_registadas=True,
+        )
+
+    def _responder(self, texto: str) -> str:
+        self.transcript.append({"papel": "gradus", "texto": texto})
+        return texto
