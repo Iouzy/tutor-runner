@@ -1,0 +1,41 @@
+nome = "Java backend"
+linguagem = "java"
+
+build = "javac -d out {ficheiro}"
+run = "java -cp out {classe}"
+regex_erro = "^(?P<ficheiro>.+):(?P<linha>\\d+): error: (?P<msg>.+)$"
+
+teto_briefing_bytes = 2048
+teto_bilhete_bytes = 400
+teto_contexto_kb = 15.0
+decaimento_dias = 21
+
+[[fraqueza]]
+id = "limites-ciclos"
+nome = "limites de ciclos"
+descricao = "decidir sozinho se o início e o fim do intervalo entram na conta"
+
+[[fraqueza]]
+id = "validacao-a-meio"
+nome = "validação a meio"
+descricao = "o while só volta a pedir o primeiro valor; erro no segundo prende-o"
+
+[[fraqueza]]
+id = "encapsulamento-furado"
+nome = "encapsulamento furado"
+descricao = "o construtor escreve direto nos campos em vez de passar pelo setter"
+
+[[fraqueza]]
+id = "equals-null-case"
+nome = "equals()/null e maiúsculas"
+descricao = "equals rebenta com null e falha em silêncio com minúsculas"
+
+[[fraqueza]]
+id = "buffer-scanner"
+nome = "buffer do Scanner"
+descricao = "nextInt() seguido de nextLine() ainda o apanha"
+
+[[fraqueza]]
+id = "this-ambito"
+nome = "this e âmbito"
+descricao = "percebe quando vê, não escreve sem pensar"

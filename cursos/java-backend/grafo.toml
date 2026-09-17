@@ -1,0 +1,59 @@
+[[no]]
+id = "f1-tipos"
+nome = "Tipos e casts"
+objetivo = "declarar, converter e perceber o que se perde num cast"
+armadilhas = ["divisão inteira silenciosa"]
+
+[[no]]
+id = "f1-if"
+nome = "if / else if"
+objetivo = "encadear condições sem repetir testes"
+depende_de = ["f1-tipos"]
+treina = ["equals-null-case"]
+
+[[no]]
+id = "f1-ciclos"
+nome = "for e while"
+objetivo = "acumuladores e contagens com fim bem definido"
+depende_de = ["f1-if"]
+armadilhas = ["o intervalo inclui os extremos?"]
+treina = ["limites-ciclos", "validacao-a-meio"]
+
+[[no]]
+id = "f1-scanner"
+nome = "Scanner e validação"
+objetivo = "ler entrada e recusá-la até ser válida"
+depende_de = ["f1-ciclos"]
+armadilhas = ["nextInt() deixa a quebra de linha no buffer"]
+treina = ["buffer-scanner", "validacao-a-meio"]
+
+[[no]]
+id = "f1-switch"
+nome = "switch e do-while"
+objetivo = "escolher entre casos fixos e repetir pelo menos uma vez"
+depende_de = ["f1-if"]
+armadilhas = ["break em falta cai para o caso seguinte"]
+treina = ["equals-null-case"]
+
+[[no]]
+id = "f1-metodos"
+nome = "Métodos"
+objetivo = "parâmetros, retorno, void e âmbito das variáveis"
+depende_de = ["f1-ciclos"]
+treina = ["this-ambito"]
+
+[[no]]
+id = "f1-arrays"
+nome = "Arrays"
+objetivo = "percorrer com índice e com for-each, e saber quando cada um serve"
+depende_de = ["f1-ciclos", "f1-metodos"]
+armadilhas = ["length é campo, não método", "o último índice é length-1"]
+treina = ["limites-ciclos", "this-ambito"]
+
+[[no]]
+id = "f1-classes"
+nome = "Classe, construtor, setter"
+objetivo = "guardar estado privado e validá-lo à entrada"
+depende_de = ["f1-metodos"]
+armadilhas = ["o construtor que ignora o setter"]
+treina = ["encapsulamento-furado", "this-ambito"]
