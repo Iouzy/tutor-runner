@@ -1,0 +1,65 @@
+# Grafo genérico de fundamentos de programação.
+# Não nomeia nenhuma linguagem: um curso põe-lhe por cima as armadilhas de
+# sintaxe, as fraquezas próprias e as âncoras. Trocar de linguagem não toca aqui.
+
+nome = "Fundamentos de programação"
+
+[[no]]
+id = "base-tipos"
+nome = "Tipos e conversões"
+objetivo = "guardar valores, saber o que cada tipo aguenta e o que se perde ao converter"
+tipos = ["previsao", "construcao"]
+
+[[no]]
+id = "base-condicionais"
+nome = "Decisões"
+objetivo = "escolher um caminho com uma condição, e encadear condições sem repetir testes"
+depende_de = ["base-tipos"]
+tipos = ["previsao", "erro-plantado", "construcao"]
+
+[[no]]
+id = "base-ciclos"
+nome = "Ciclos e acumuladores"
+objetivo = "repetir até uma condição, e somar ou contar pelo caminho com um fim bem definido"
+depende_de = ["base-condicionais"]
+tipos = ["previsao", "erro-plantado", "construcao", "reescrita"]
+treina = ["limites-ciclos"]
+
+[[no]]
+id = "base-escolha"
+nome = "Escolha entre casos fixos"
+objetivo = "escolher entre N casos conhecidos sem uma cadeia de condições"
+depende_de = ["base-condicionais"]
+tipos = ["previsao", "erro-plantado", "construcao"]
+
+[[no]]
+id = "base-entrada"
+nome = "Entrada e validação"
+objetivo = "ler o que o utilizador escreve e recusá-lo até estar válido"
+depende_de = ["base-ciclos"]
+tipos = ["erro-plantado", "construcao"]
+treina = ["validacao-a-meio"]
+
+[[no]]
+id = "base-funcoes"
+nome = "Funções"
+objetivo = "dar um nome a um bocado de trabalho, com entradas e uma saída"
+depende_de = ["base-ciclos"]
+tipos = ["previsao", "construcao", "explicar"]
+treina = ["ambito-variaveis"]
+
+[[no]]
+id = "base-listas"
+nome = "Listas e iteração"
+objetivo = "guardar muitos valores e percorrê-los, sabendo onde a lista começa e acaba"
+depende_de = ["base-ciclos", "base-funcoes"]
+tipos = ["previsao", "erro-plantado", "construcao", "reescrita"]
+treina = ["limites-ciclos"]
+
+[[no]]
+id = "base-objetos"
+nome = "Objetos: estado e validação"
+objetivo = "guardar estado que só se muda por um caminho controlado"
+depende_de = ["base-funcoes"]
+tipos = ["erro-plantado", "construcao", "explicar"]
+treina = ["encapsulamento-furado"]

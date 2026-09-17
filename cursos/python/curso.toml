@@ -1,0 +1,42 @@
+nome = "Python do zero"
+linguagem = "python"
+base = "fundamentos"
+extensao = ".py"
+
+build = "python3 -m py_compile {ficheiro}"
+run = "python3 {ficheiro}"
+# Em Python o sinal está quase todo no run: py_compile só apanha sintaxe.
+regex_erro = "(?P<msg>\\w+(?:Error|Exception): .+)$"
+
+teto_briefing_bytes = 2048
+teto_bilhete_bytes = 400
+teto_contexto_kb = 15.0
+decaimento_dias = 21
+
+[[fraqueza]]
+id = "indentacao"
+nome = "indentação"
+descricao = "o bloco é a indentação; uma linha desalinhada muda o programa em silêncio"
+
+[[fraqueza]]
+id = "tipo-do-input"
+nome = "input() devolve texto"
+descricao = "input() nunca devolve um número; sem int() a soma vira concatenação"
+
+[no.base-tipos]
+armadilhas = ["'2' + '2' dá '22', não 4"]
+treina = ["tipo-do-input"]
+
+[no.base-condicionais]
+armadilhas = ["os dois pontos e a indentação são o bloco"]
+treina = ["indentacao"]
+
+[no.base-ciclos]
+armadilhas = ["range(a, b) não inclui b"]
+
+[no.base-entrada]
+armadilhas = ["input() devolve sempre texto"]
+treina = ["tipo-do-input", "validacao-a-meio"]
+
+[no.base-listas]
+armadilhas = ["o último índice é len(lista)-1", "len() é função, não atributo"]

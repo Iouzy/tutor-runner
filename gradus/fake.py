@@ -17,11 +17,11 @@ from .telemetry import Compilation
 
 
 EXERCICIOS = {
-    "f1-scanner": ["PedeIdade.java", "PedeIdade.java"],
-    "f1-arrays": ["MediaArray.java", "MediaArray.java", "MaiorArray.java"],
-    "f1-switch": ["MenuNotas.java"],
-    "f1-classes": ["ContaSimples.java"],
-    "f1-metodos": ["Conversor.java"],
+    "base-entrada": ["PedeIdade.java", "PedeIdade.java"],
+    "base-listas": ["MediaArray.java", "MediaArray.java", "MaiorArray.java"],
+    "base-escolha": ["MenuNotas.java"],
+    "base-objetos": ["ContaSimples.java"],
+    "base-funcoes": ["Conversor.java"],
 }
 
 

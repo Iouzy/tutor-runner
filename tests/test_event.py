@@ -8,7 +8,7 @@ FRAQUEZAS = {"limites-ciclos", "buffer-scanner"}
 
 
 def passagem(**kw) -> Passage:
-    base = dict(id="p01", dia="2026-09-17", no="f1-arrays", exercicio="A.java", resultado="passou")
+    base = dict(id="p01", dia="2026-09-17", no="base-listas", exercicio="A.java", resultado="passou")
     base.update(kw)
     return Passage(**base)
 

@@ -1,0 +1,22 @@
+# Fraquezas transversais: são da PESSOA, não da linguagem. Vão com ela para
+# Python, SQL ou o que vier. As que morrem com a linguagem vivem no curso.
+
+[[fraqueza]]
+id = "limites-ciclos"
+nome = "limites de ciclos"
+descricao = "decidir sozinho se o início e o fim do intervalo entram na conta"
+
+[[fraqueza]]
+id = "validacao-a-meio"
+nome = "validação a meio"
+descricao = "o ciclo só volta a pedir o primeiro valor; um erro no segundo prende-o"
+
+[[fraqueza]]
+id = "ambito-variaveis"
+nome = "âmbito de variáveis"
+descricao = "percebe quando vê, não escreve sem pensar onde a variável vive"
+
+[[fraqueza]]
+id = "encapsulamento-furado"
+nome = "encapsulamento furado"
+descricao = "o construtor escreve direto nos campos em vez de passar pela validação"

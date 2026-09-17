@@ -16,7 +16,7 @@ class TestBriefing(unittest.TestCase):
 
     def test_cabe_no_orcamento(self):
         bf = briefing_mod.build(
-            self.curso, self.st, self.curso.node("f1-arrays"), telemetria=Path("/nao/existe")
+            self.curso, self.st, self.curso.node("base-listas"), telemetria=Path("/nao/existe")
         )
         self.assertLessEqual(bf.bytes, self.curso.teto_briefing_bytes)
 
@@ -24,14 +24,14 @@ class TestBriefing(unittest.TestCase):
         gordo = Handoff(onde_ficou="x" * 2000, ultimo_erro="", ja_explicado=[], nao_repetir="")
         with self.assertRaises(CourseError):
             briefing_mod.build(
-                self.curso, self.st, self.curso.node("f1-arrays"),
+                self.curso, self.st, self.curso.node("base-listas"),
                 telemetria=Path("/nao/existe"), handoff=gordo,
             )
 
     def test_briefing_nao_traz_historico(self):
-        self.st.node("f1-ciclos").dominio = Mastery.AUTOMATICO
+        self.st.node("base-ciclos").dominio = Mastery.AUTOMATICO
         bf = briefing_mod.build(
-            self.curso, self.st, self.curso.node("f1-arrays"), telemetria=Path("/nao/existe")
+            self.curso, self.st, self.curso.node("base-listas"), telemetria=Path("/nao/existe")
         )
         self.assertNotIn("HISTORICO", bf.texto)
         self.assertNotIn("passagem", bf.texto.lower())

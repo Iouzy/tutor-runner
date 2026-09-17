@@ -19,6 +19,20 @@ class Mastery(IntEnum):
         return self.name.lower().replace("_", " ")
 
 
+TIPOS_EXERCICIO = ("previsao", "erro-plantado", "construcao", "reescrita", "explicar")
+
+
+@dataclass(frozen=True)
+class Anchor:
+    """A hand-written exercise, known good. Control values are mandatory: without
+    them correctness is a model's opinion, which is how 12550 got accepted once."""
+
+    tipo: str
+    enunciado: str
+    ficheiro: str = ""
+    controlo: tuple[dict[str, str], ...] = ()
+
+
 @dataclass(frozen=True)
 class Node:
     id: str
@@ -27,6 +41,8 @@ class Node:
     depende_de: tuple[str, ...] = ()
     armadilhas: tuple[str, ...] = ()
     treina: tuple[str, ...] = ()
+    tipos: tuple[str, ...] = ()
+    ancoras: tuple[Anchor, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -45,6 +61,8 @@ class Course:
     regex_erro: str
     nodes: dict[str, Node]
     weaknesses: dict[str, Weakness]
+    linguagem: str = ""
+    extensao: str = ""
     teto_briefing_bytes: int = 2048
     teto_bilhete_bytes: int = 400
     teto_contexto_kb: float = 15.0

@@ -20,13 +20,21 @@ def _course(args):
     return course_mod.load(Path(args.curso)), Path(args.curso)
 
 
+def _work(args) -> Path:
+    """One ledger per course. What you know in Java is not what you know in Python —
+    only the profile and the transversal weaknesses cross over."""
+    if args.trabalho:
+        return Path(args.trabalho)
+    return RAIZ / "trabalho" / Path(args.curso).name
+
+
 def _semear(runner: Runner) -> None:
     """Where the real repo is today: fundamentals solid, arrays untouched."""
     st = state_mod.State()
-    for n in ("f1-tipos", "f1-if", "f1-ciclos", "f1-metodos"):
+    for n in ("base-tipos", "base-condicionais", "base-ciclos", "base-funcoes"):
         st.node(n).dominio = Mastery.ESCRITO_SOZINHO
         st.node(n).visto_em = "2026-09-10"
-    for n in ("f1-switch", "f1-scanner"):
+    for n in ("base-escolha", "base-entrada"):
         st.node(n).dominio = Mastery.ESCRITO_COM_AJUDA
         st.node(n).visto_em = "2026-09-16"
     for w, dias in (("limites-ciclos", ["2026-09-12", "2026-09-16"]), ("buffer-scanner", ["2026-09-16"])):
@@ -37,7 +45,7 @@ def _semear(runner: Runner) -> None:
 
 def cmd_demo(args) -> int:
     curso, curso_dir = _course(args)
-    work = Path(args.trabalho)
+    work = _work(args)
     if work.exists() and args.limpar:
         shutil.rmtree(work)
     work.mkdir(parents=True, exist_ok=True)
@@ -102,7 +110,7 @@ def cmd_demo(args) -> int:
 
 def cmd_proximo(args) -> int:
     curso, _ = _course(args)
-    st = state_mod.load(Path(args.trabalho) / "estado.json")
+    st = state_mod.load(_work(args) / "estado.json")
     escolha = next_node(curso, st)
     if not escolha:
         print("nada elegível.")
@@ -115,7 +123,7 @@ def cmd_briefing(args) -> int:
     from . import briefing as briefing_mod
 
     curso, _ = _course(args)
-    work = Path(args.trabalho)
+    work = _work(args)
     st = state_mod.load(work / "estado.json")
     escolha = next_node(curso, st)
     if not escolha:
@@ -129,7 +137,7 @@ def cmd_briefing(args) -> int:
 
 def cmd_regenerar(args) -> int:
     curso, curso_dir = _course(args)
-    work = Path(args.trabalho)
+    work = _work(args)
     runner = Runner(curso, curso_dir, work)
     runner.regenerate()
     alvo = "ESTADO.md" if args.cmd == "estado" else "HISTORICO.md"
@@ -140,7 +148,7 @@ def cmd_regenerar(args) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="gradus", description="ensina gastando o mínimo de contexto")
     ap.add_argument("--curso", default=str(RAIZ / "cursos" / "java-backend"))
-    ap.add_argument("--trabalho", default=str(RAIZ / "trabalho"))
+    ap.add_argument("--trabalho", default=None, help="por omissão, trabalho/<curso>/")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("demo", help="corre um dia de estudo inteiro, sem modelo e sem rede")
     d.add_argument("--limpar", action="store_true", help="apaga o trabalho anterior primeiro")

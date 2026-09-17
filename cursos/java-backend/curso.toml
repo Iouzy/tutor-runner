@@ -1,5 +1,7 @@
 nome = "Java backend"
 linguagem = "java"
+base = "fundamentos"
+extensao = ".java"
 
 build = "javac -d out {ficheiro}"
 run = "java -cp out {classe}"
@@ -11,21 +13,6 @@ teto_contexto_kb = 15.0
 decaimento_dias = 21
 
 [[fraqueza]]
-id = "limites-ciclos"
-nome = "limites de ciclos"
-descricao = "decidir sozinho se o início e o fim do intervalo entram na conta"
-
-[[fraqueza]]
-id = "validacao-a-meio"
-nome = "validação a meio"
-descricao = "o while só volta a pedir o primeiro valor; erro no segundo prende-o"
-
-[[fraqueza]]
-id = "encapsulamento-furado"
-nome = "encapsulamento furado"
-descricao = "o construtor escreve direto nos campos em vez de passar pelo setter"
-
-[[fraqueza]]
 id = "equals-null-case"
 nome = "equals()/null e maiúsculas"
 descricao = "equals rebenta com null e falha em silêncio com minúsculas"
@@ -35,7 +22,48 @@ id = "buffer-scanner"
 nome = "buffer do Scanner"
 descricao = "nextInt() seguido de nextLine() ainda o apanha"
 
-[[fraqueza]]
-id = "this-ambito"
-nome = "this e âmbito"
-descricao = "percebe quando vê, não escreve sem pensar"
+[no.base-tipos]
+armadilhas = ["divisão inteira silenciosa: 7/2 dá 3"]
+
+[no.base-condicionais]
+armadilhas = ["== compara referências em Strings, não o conteúdo"]
+treina = ["equals-null-case"]
+
+[no.base-ciclos]
+armadilhas = ["o intervalo inclui os extremos?"]
+
+[no.base-escolha]
+armadilhas = ["break em falta cai para o caso seguinte"]
+treina = ["equals-null-case"]
+
+[no.base-entrada]
+armadilhas = ["nextInt() deixa a quebra de linha no buffer"]
+treina = ["buffer-scanner", "validacao-a-meio"]
+
+[no.base-listas]
+armadilhas = ["length é campo, não método", "o último índice é length-1"]
+
+  [[no.base-listas.ancora]]
+  tipo = "construcao"
+  ficheiro = "MediaArray.java"
+  enunciado = "Cinco notas num int[], devolve a média. Decide tu se a média é inteira ou com casas decimais — e sabe dizer porquê."
+  controlo = [
+    { entrada = "10 12 14 16 18", saida = "14" },
+    { entrada = "10 11 12 13 14", saida = "12" },
+  ]
+
+  [[no.base-listas.ancora]]
+  tipo = "erro-plantado"
+  ficheiro = "MaiorQuebrado.java"
+  enunciado = "Este programa devolve o maior de um array e compila. Com { -3, -7, -5 } devolve 0. Porquê?"
+  controlo = [{ entrada = "-3 -7 -5", saida = "-3" }]
+
+[no.base-objetos]
+armadilhas = ["o construtor que ignora o setter"]
+treina = ["encapsulamento-furado", "ambito-variaveis"]
+
+  [[no.base-objetos.ancora]]
+  tipo = "erro-plantado"
+  ficheiro = "PessoaQuebrada.java"
+  enunciado = "O setIdade() recusa idades negativas, e mesmo assim new Pessoa(\"Ana\", -4) passa. Onde é o furo?"
+  controlo = [{ entrada = "Ana -4", saida = "IllegalArgumentException" }]
