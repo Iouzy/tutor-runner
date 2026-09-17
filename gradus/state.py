@@ -14,6 +14,7 @@ class NodeState:
     dominio: Mastery = Mastery.POR_TOCAR
     visto_em: str | None = None       # last day this node was worked
     previsoes_seguidas: int = 0        # the simulator's streak; 10 promotes
+    previsoes_desde: str | None = None  # the day it started: a streak must cross a night
     tipos_feitos: dict[str, str] = field(default_factory=dict)   # exercise type -> last day
 
 
@@ -71,6 +72,7 @@ def load(path: Path) -> State:
                 dominio=Mastery(v["dominio"]),
                 visto_em=v.get("visto_em"),
                 previsoes_seguidas=v.get("previsoes_seguidas", 0),
+                previsoes_desde=v.get("previsoes_desde"),
                 tipos_feitos=dict(v.get("tipos_feitos", {})),
             )
             for k, v in raw.get("nos", {}).items()
@@ -100,6 +102,7 @@ def save(path: Path, state: State) -> None:
                 "dominio": int(v.dominio),
                 "visto_em": v.visto_em,
                 "previsoes_seguidas": v.previsoes_seguidas,
+                "previsoes_desde": v.previsoes_desde,
                 "tipos_feitos": dict(sorted(v.tipos_feitos.items())),
             }
             for k, v in sorted(state.nos.items())

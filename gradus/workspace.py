@@ -15,6 +15,28 @@ from .model import Course, CourseError
 from .telemetry import Compilation, extrair_erro, record, hora
 
 
+def experimentar(course: Course, nome: str, codigo: str, entrada: str = "") -> tuple[bool, str]:
+    """Builds and runs a throwaway copy, away from his folder. Used to find out what
+    a piece of code really prints — nobody is asked, it is run."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as d:
+        alvo = Path(d) / nome
+        alvo.write_text(codigo, encoding="utf-8")
+        for comando in (course.build, course.run):
+            cmd = comando.format(ficheiro=str(alvo), classe=alvo.stem)
+            try:
+                proc = subprocess.run(
+                    shlex.split(cmd), capture_output=True, text=True,
+                    cwd=d, input=entrada, timeout=30,
+                )
+            except (subprocess.TimeoutExpired, FileNotFoundError):
+                return False, ""
+            if proc.returncode != 0:
+                return False, proc.stdout
+        return True, proc.stdout
+
+
 @dataclass(frozen=True)
 class Attempt:
     """One press of the button: what the machine did, and what it said."""

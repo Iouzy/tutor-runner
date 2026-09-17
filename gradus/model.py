@@ -16,7 +16,8 @@ class Mastery(IntEnum):
 
     @property
     def label(self) -> str:
-        return self.name.lower().replace("_", " ")
+        # Escrito como se lê em português: é isto que aparece no ESTADO.md e no ecrã.
+        return {Mastery.AUTOMATICO: "automático"}.get(self, self.name.lower().replace("_", " "))
 
 
 TIPOS_EXERCICIO = ("previsao", "erro-plantado", "construcao", "reescrita", "explicar")
