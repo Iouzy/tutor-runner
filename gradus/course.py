@@ -11,7 +11,7 @@ import re
 import tomllib
 from pathlib import Path
 
-from .model import TIPOS_EXERCICIO, Anchor, Course, CourseError, Node, Weakness
+from .model import TIPOS_EXERCICIO, Anchor, Course, CourseError, Node, Verification, Weakness
 
 
 def _toml(path: Path) -> dict:
@@ -57,6 +57,20 @@ def _anchor(raw: dict, node_id: str) -> Anchor:
         enunciado=raw["enunciado"],
         ficheiro=raw.get("ficheiro", ""),
         controlo=tuple(raw["controlo"]),
+    )
+
+
+def _verificacao(raw: dict | None) -> Verification | None:
+    if not raw:
+        return None
+    for chave in ("ficheiro", "codigo"):
+        if chave not in raw:
+            raise CourseError(
+                f"[verificacao] não define '{chave}' — sem ele o doctor não consegue "
+                f"partir um ficheiro de propósito, e o regex_erro nunca é posto à prova"
+            )
+    return Verification(
+        ficheiro=raw["ficheiro"], codigo=raw["codigo"], espera=raw.get("espera", "")
     )
 
 
@@ -128,6 +142,7 @@ def load(course_dir: Path, *, raiz: Path | None = None) -> Course:
         teto_bilhete_bytes=curso.get("teto_bilhete_bytes", 400),
         teto_contexto_kb=curso.get("teto_contexto_kb", 15.0),
         decaimento_dias=curso.get("decaimento_dias", 21),
+        verificacao=_verificacao(curso.get("verificacao")),
     )
 
 

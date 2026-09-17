@@ -86,6 +86,22 @@ def _extensao(course: Course) -> list[Finding]:
     return []
 
 
+def _verificacao(course: Course) -> list[Finding]:
+    if course.verificacao is None:
+        return [Finding(
+            AVISO, "curso.toml", "não há [verificacao] com um ficheiro partido de propósito",
+            "sem ela o `gradus doctor` não consegue pôr o regex_erro à prova, e a telemetria "
+            "guarda linhas cruas durante semanas sem nunca falhar",
+        )]
+    v = course.verificacao
+    if course.extensao and not v.ficheiro.endswith(course.extensao):
+        return [Finding(
+            ERRO, "curso.toml", f"[verificacao].ficheiro não acaba em '{course.extensao}'",
+            "é de outra linguagem — o build do curso não lhe pega",
+        )]
+    return []
+
+
 def _ancoras(course: Course, node: Node) -> list[Finding]:
     achados = []
     vistos: set[str] = set()
@@ -198,7 +214,10 @@ def _orcamento(course: Course) -> list[Finding]:
 
 
 def check(course: Course) -> list[Finding]:
-    achados = _comandos(course) + _regex(course) + _extensao(course) + _fraquezas(course)
+    achados = (
+        _comandos(course) + _regex(course) + _extensao(course)
+        + _verificacao(course) + _fraquezas(course)
+    )
     for node in sorted(course.nodes.values(), key=lambda n: n.id):
         achados += _tipos(node) + _ancoras(course, node)
     achados += _orcamento(course)

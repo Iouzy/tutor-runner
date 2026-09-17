@@ -14,6 +14,7 @@ python3 -m gradus demo --limpar   # um dia de estudo inteiro, sem modelo e sem r
 python3 -m gradus proximo         # que exercício vem a seguir, e porquê
 python3 -m gradus briefing        # o contexto exato que a próxima sessão recebe
 python3 -m gradus lint            # o que rebenta neste curso antes de o usar
+python3 -m gradus doctor          # a máquina aguenta-o? com o comando do conserto
 python3 -m gradus estado          # regenera ESTADO.md
 python3 -m gradus historico       # regenera HISTORICO.md
 python3 -m unittest discover -s tests -t .
@@ -72,6 +73,20 @@ nó pede, valores de controlo completos) e monta o briefing mais gordo possível
 nó, fraquezas todas ativas, erros no teto e bilhete de retoma — para dizer o que
 é que esse dia perde, ou se nem largando tudo cabe. Não corre nada: tocar na
 máquina é trabalho do `doctor`.
+
+## A máquina
+
+`gradus doctor` é a única parte do programa que toca na máquina: versão do
+Python, `tkinter` (no Ubuntu falta o `python3-tk`, e ele diz o `apt install`),
+os binários do `build` e do `run`, o `claude`, permissão de escrita, e que a
+`ANTHROPIC_API_KEY` está **ausente** — com ela posta, o `claude -p` gasta a API
+em vez da subscrição.
+
+A verificação que importa é a última: escreve o ficheiro que o curso traz
+partido de propósito em `[verificacao]`, compila-o a sério e exige que o
+`regex_erro` do curso apanhe o erro — pelo mesmo código que as sessões usam.
+Sem isto, `telemetria/` enche-se de linhas cruas durante semanas sem nunca
+falhar.
 
 ## Agnóstico
 

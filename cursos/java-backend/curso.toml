@@ -67,3 +67,18 @@ treina = ["encapsulamento-furado", "ambito-variaveis"]
   ficheiro = "PessoaQuebrada.java"
   enunciado = "O setIdade() recusa idades negativas, e mesmo assim new Pessoa(\"Ana\", -4) passa. Onde é o furo?"
   controlo = [{ entrada = "Ana -4", saida = "IllegalArgumentException" }]
+
+# O ficheiro que o `gradus doctor` parte de propósito para confirmar que o
+# regex_erro apanha mesmo o que o javac diz. Sem isto a telemetria pode guardar
+# linhas cruas durante semanas sem nunca falhar.
+[verificacao]
+ficheiro = "Partido.java"
+espera = "incompatible types"
+codigo = """
+public class Partido {
+    public static void main(String[] args) {
+        int x = "isto não é um int";
+        System.out.println(x);
+    }
+}
+"""

@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from gradus import course as course_mod, lint
-from gradus.model import Anchor, Course, Node
+from gradus.model import Anchor, Course, Node, Verification
 
 CURSO = Path(__file__).resolve().parent.parent / "cursos" / "java-backend"
 CONTROLO = ({"entrada": "1", "saida": "2"},)
@@ -17,6 +17,7 @@ def curso(**kw) -> Course:
         regex_erro=r"^(?P<ficheiro>.+):(?P<linha>\d+): (?P<msg>.+)$",
         nodes={"a": Node(id="a", nome="A", objetivo="o", tipos=("construcao",))},
         weaknesses={}, extensao=".x", teto_briefing_bytes=4096,
+        verificacao=Verification(ficheiro="partido.x", codigo="partido"),
     )
     base.update(kw)
     return Course(**base)
@@ -29,6 +30,14 @@ def problemas(achados, nivel) -> list[str]:
 class TestLint(unittest.TestCase):
     def test_um_curso_sao_nao_tem_queixas(self):
         self.assertEqual(lint.check(curso()), [])
+
+    def test_sem_ficheiro_partido_ninguem_poe_o_regex_a_prova(self):
+        achados = lint.check(curso(verificacao=None))
+        self.assertTrue(any("[verificacao]" in p for p in problemas(achados, lint.AVISO)))
+
+    def test_ficheiro_partido_de_outra_linguagem(self):
+        v = Verification(ficheiro="Partido.java", codigo="x")
+        self.assertTrue(problemas(lint.check(curso(verificacao=v)), lint.ERRO))
 
     def test_build_sem_ficheiro(self):
         achados = lint.check(curso(build="javac -d out"))

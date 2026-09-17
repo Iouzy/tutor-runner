@@ -24,6 +24,27 @@ class Compilation:
         return self.erro is None
 
 
+@dataclass(frozen=True)
+class Erro:
+    msg: str
+    pelo_regex: bool        # False: the course's regex missed and this is the raw line
+
+
+def extrair_erro(stderr: str, regex_erro: str) -> Erro:
+    """Normalises what the compiler said, and says whether the regex did the work.
+
+    `gradus doctor` checks that flag against a file broken on purpose: a regex that
+    never matches turns weeks of telemetry into noise without ever failing.
+    """
+    texto = stderr.strip()
+    if not texto:
+        return Erro("erro sem mensagem", False)
+    m = re.search(regex_erro, texto, re.MULTILINE)
+    if m and "msg" in (m.groupdict() or {}):
+        return Erro(m.group("msg"), True)
+    return Erro(texto.splitlines()[0], False)
+
+
 def record(telemetria: Path, comp: Compilation) -> None:
     telemetria.mkdir(parents=True, exist_ok=True)
     linha = json.dumps(
@@ -41,10 +62,7 @@ def compile_and_record(telemetria: Path, *, build: str, regex_erro: str, no: str
     """
     cmd = build.format(ficheiro=str(ficheiro), classe=ficheiro.stem)
     proc = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
-    erro = None
-    if proc.returncode != 0:
-        m = re.search(regex_erro, proc.stderr, re.MULTILINE)
-        erro = (m.group("msg") if m and "msg" in (m.groupdict() or {}) else proc.stderr.strip().splitlines()[0]) if proc.stderr.strip() else "erro sem mensagem"
+    erro = extrair_erro(proc.stderr, regex_erro).msg if proc.returncode != 0 else None
     comp = Compilation(
         t=datetime.now().isoformat(timespec="seconds"), no=no, ficheiro=ficheiro.name, erro=erro
     )

@@ -40,3 +40,13 @@ treina = ["tipo-do-input", "validacao-a-meio"]
 
 [no.base-listas]
 armadilhas = ["o último índice é len(lista)-1", "len() é função, não atributo"]
+
+# O ficheiro que o `gradus doctor` parte de propósito: se o regex_erro deixar de
+# apanhar o que o py_compile diz, a telemetria fica muda sem ninguém dar por isso.
+[verificacao]
+ficheiro = "partido.py"
+espera = "SyntaxError"
+codigo = """
+def soma(a, b)
+    return a + b
+"""

@@ -166,6 +166,26 @@ def cmd_lint(args) -> int:
     return 1 if erros else 0
 
 
+def cmd_doctor(args) -> int:
+    """The only command that touches the machine. Every queixa traz o comando."""
+    from . import doctor as doctor_mod
+
+    curso, _ = _course(args)
+    print(f"\n{BOLD}gradus doctor{RESET} · curso {curso.nome}\n")
+    checks = doctor_mod.run(curso, _work(args))
+    for c in checks:
+        if c.ok:
+            marca = f"{VERDE}✓{RESET}"
+        else:
+            marca = f"{VERM}✗{RESET}" if c.nivel == doctor_mod.ERRO else f"{LARANJA}!{RESET}"
+        print(f" {marca} {BOLD}{c.nome:18}{RESET}{c.detalhe}")
+        if c.conserto:
+            print(f"   {DIM}→ {c.conserto}{RESET}")
+    falhas = [c for c in checks if not c.ok and c.nivel == doctor_mod.ERRO]
+    print(f"\n{len(falhas)} por resolver de {len(checks)} verificações\n")
+    return 1 if falhas else 0
+
+
 def cmd_regenerar(args) -> int:
     curso, curso_dir = _course(args)
     work = _work(args)
@@ -187,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("proximo", help="que exercício vem a seguir, e porquê").set_defaults(func=cmd_proximo)
     sub.add_parser("briefing", help="imprime o contexto exato que a próxima sessão recebe").set_defaults(func=cmd_briefing)
     sub.add_parser("lint", help="o que rebenta neste curso antes de o usar").set_defaults(func=cmd_lint)
+    sub.add_parser("doctor", help="a máquina aguenta este curso? com o comando do conserto").set_defaults(func=cmd_doctor)
     sub.add_parser("estado", help="regenera e mostra ESTADO.md").set_defaults(func=cmd_regenerar)
     sub.add_parser("historico", help="regenera e mostra HISTORICO.md").set_defaults(func=cmd_regenerar)
 

@@ -61,6 +61,17 @@ class Weakness:
 
 
 @dataclass(frozen=True)
+class Verification:
+    """A file broken on purpose. `gradus doctor` writes it, builds it, and demands
+    that the course's own regex catch the error — otherwise the telemetry records
+    raw noise for weeks and nothing ever fails."""
+
+    ficheiro: str
+    codigo: str
+    espera: str = ""        # a fragment the caught message must contain
+
+
+@dataclass(frozen=True)
 class Course:
     nome: str
     perfil: str
@@ -75,6 +86,7 @@ class Course:
     teto_bilhete_bytes: int = 400
     teto_contexto_kb: float = 15.0
     decaimento_dias: int = 21
+    verificacao: Verification | None = None
 
     def node(self, node_id: str) -> Node:
         try:
