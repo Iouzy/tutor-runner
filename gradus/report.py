@@ -31,7 +31,7 @@ def estado_md(course: Course, state: State, proximo: str | None) -> str:
             linhas.append(f"- **{nivel.label}** — {', '.join(nomes)}")
 
     linhas += ["", "## Próximo passo", f"- {proximo or 'nada elegível — o grafo acabou ou está bloqueado'}", "", "## Fraquezas ativas"]
-    ativas = state.fraquezas_ativas(limite=99)
+    ativas = state.fraquezas_ativas(limite=99, conhecidas=set(course.weaknesses))
     if not ativas:
         linhas.append("- nenhuma com evidência recente")
     for w_id in ativas:

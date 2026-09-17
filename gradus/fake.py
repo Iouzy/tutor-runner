@@ -42,10 +42,13 @@ class Beat:
 class ScriptedSession:
     """Plays a fixed study day so the cycle can be watched end to end."""
 
-    def __init__(self, beats: list[Beat], inicio: str = "14:02") -> None:
+    def __init__(self, beats: list[Beat], inicio: str = "14:02", fraquezas: set[str] | None = None) -> None:
         self.beats = list(beats)
         self.relogio = datetime.fromisoformat(f"2026-09-17T{inicio}:00")
         self._usados: dict[str, int] = {}
+        # A real session can only name the weaknesses its briefing named. This day
+        # was written for Java; against another course the Java-only ones drop.
+        self.fraquezas = fraquezas
 
     def _exercicio(self, node_id: str, retoma: Handoff | None, briefing: str = "") -> str:
         # A real session would use the anchor the briefing names; this one does too,
@@ -59,6 +62,12 @@ class ScriptedSession:
             i = min(i + 1, len(nomes) - 1) if node_id in self._usados else 0
             self._usados[node_id] = i
         return nomes[self._usados.get(node_id, 0)]
+
+    def _juizos(self, beat: Beat) -> list[Judgement]:
+        juizos = beat.juizos or []
+        if self.fraquezas is None:
+            return juizos
+        return [j for j in juizos if j.fraqueza is None or j.fraqueza in self.fraquezas]
 
     def run(self, texto_briefing: str, node_id: str, retoma: Handoff | None) -> RawRun:
         beat = self.beats.pop(0)
@@ -102,7 +111,7 @@ class ScriptedSession:
             kb_contexto=beat.kb_contexto,
             duracao_min=beat.duracao_min,
             handoff=beat.handoff,
-            juizos=beat.juizos or [],
+            juizos=self._juizos(beat),
             duvidas_novas=beat.duvidas or [],
         )
 

@@ -45,9 +45,18 @@ class State:
     def weakness(self, w_id: str) -> WeaknessState:
         return self.fraquezas.setdefault(w_id, WeaknessState())
 
-    def fraquezas_ativas(self, limite: int = 3) -> list[str]:
-        """The few that earn a slot in the briefing — most recent evidence first."""
-        vivas = [(w_id, w) for w_id, w in self.fraquezas.items() if w.ativa and w.ocorrencias]
+    def fraquezas_ativas(self, limite: int = 3, conhecidas: set[str] | None = None) -> list[str]:
+        """The few that earn a slot in the briefing — most recent evidence first.
+
+        `conhecidas` drops what this course cannot name: a weakness of another
+        language reaches here through the shared profile, and a briefing that
+        mentions it would be a briefing about a language he is not writing.
+        """
+        vivas = [
+            (w_id, w)
+            for w_id, w in self.fraquezas.items()
+            if w.ativa and w.ocorrencias and (conhecidas is None or w_id in conhecidas)
+        ]
         vivas.sort(key=lambda kv: (kv[1].ultimas[-1] if kv[1].ultimas else "", kv[1].ocorrencias), reverse=True)
         return [w_id for w_id, _ in vivas[:limite]]
 

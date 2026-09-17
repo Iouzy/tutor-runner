@@ -117,7 +117,7 @@ def build(
         linhas.append(f"Controlo (verifica com isto, não a olho): {controlo}")
     no_slot = Slot("nó", "\n".join(linhas), teto=700)
 
-    ativas = state.fraquezas_ativas()
+    ativas = state.fraquezas_ativas(conhecidas=set(course.weaknesses))
     if ativas:
         corpo = ["## Fraquezas ativas — mete-as no exercício se fizer sentido"]
         corpo += [f"- {course.weaknesses[w].nome}: {course.weaknesses[w].descricao}" for w in ativas]

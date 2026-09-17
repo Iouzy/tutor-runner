@@ -38,6 +38,8 @@ def _semear(runner: Runner) -> None:
         st.node(n).dominio = Mastery.ESCRITO_COM_AJUDA
         st.node(n).visto_em = "2026-09-16"
     for w, dias in (("limites-ciclos", ["2026-09-12", "2026-09-16"]), ("buffer-scanner", ["2026-09-16"])):
+        if w not in runner.course.weaknesses:    # buffer-scanner só existe em Java
+            continue
         st.weakness(w).ocorrencias = len(dias)
         st.weakness(w).ultimas = dias
     state_mod.save(runner.estado_path, st)
@@ -57,7 +59,7 @@ def cmd_demo(args) -> int:
     print(f"\n{BOLD}gradus{RESET} · curso {curso.nome} · teto de briefing {curso.teto_briefing_bytes} B")
     print(f"{DIM}sessão de estudo de 2026-09-17 — cinco passagens, cada uma uma sessão fria{RESET}\n")
 
-    sessao = ScriptedSession(DIA_TIPO)
+    sessao = ScriptedSession(DIA_TIPO, fraquezas=set(curso.weaknesses))
     dia = "2026-09-17"
     handoff = None
     acumulado = 0.0
