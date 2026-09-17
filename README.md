@@ -47,6 +47,12 @@ fraquezas ativas. Um nó em `automático` decai ao fim de `decaimento_dias` e
 volta a aparecer — repetição espaçada, porque esquecer é o modo de falha que
 este projeto tem no nome.
 
+Dentro de um nó a ordem é fixa: **previsão → erro plantado → construção →
+(dias depois) reescrita**. As duas primeiras custam dois minutos a começar e
+derrubam a barreira de quem adia; a reescrita tem uma noite de esquecimento pelo
+meio, senão é copiar. O escalonador nunca dá duas construções do mesmo nó
+seguidas — prática em bloco ensina a forma da sessão, não o nó.
+
 Um exercício passado sobe **um** degrau. Só o simulador (dez previsões seguidas
 certas) leva um nó a `automático`. Ter commit não é saber.
 

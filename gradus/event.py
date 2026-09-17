@@ -5,6 +5,8 @@ import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from .model import TIPOS_EXERCICIO
+
 CAMPOS_JUIZO = {"fraqueza", "tipo_duvida", "dominio_atingido"}
 TIPOS_DUVIDA = {"conceito", "sintaxe", "ferramenta"}
 
@@ -29,6 +31,7 @@ class Passage:
     no: str
     exercicio: str
     resultado: str                       # "passou" | "cortado" | "abandonado"
+    tipo: str = "construcao"             # which of the five kinds this passage was
     # --- measured by the program ---
     duracao_min: int = 0
     compilacoes: int = 0
@@ -45,6 +48,10 @@ class Passage:
     RESULTADOS = ("passou", "cortado", "abandonado")
 
     def validate(self, fraquezas_validas: set[str]) -> None:
+        if self.tipo not in TIPOS_EXERCICIO:
+            raise EventError(
+                f"tipo de exercício '{self.tipo}' inválido — usa um de {', '.join(TIPOS_EXERCICIO)}"
+            )
         if self.resultado not in self.RESULTADOS:
             raise EventError(
                 f"resultado '{self.resultado}' inválido — usa um de {', '.join(self.RESULTADOS)}"

@@ -27,6 +27,10 @@ class TestEvent(unittest.TestCase):
         with self.assertRaises(EventError):
             passagem(msgs_antes_do_1o_codigo=9, msgs_total=4).validate(FRAQUEZAS)
 
+    def test_tipo_inventado_e_rejeitado(self):
+        with self.assertRaises(EventError):
+            passagem(tipo="quizz").validate(FRAQUEZAS)
+
     def test_passagem_valida_passa(self):
         passagem(
             msgs_antes_do_1o_codigo=4, msgs_total=12,

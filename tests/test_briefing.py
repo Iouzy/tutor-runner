@@ -35,3 +35,34 @@ class TestBriefing(unittest.TestCase):
         )
         self.assertNotIn("HISTORICO", bf.texto)
         self.assertNotIn("passagem", bf.texto.lower())
+
+
+class TestTipoNoBriefing(unittest.TestCase):
+    def setUp(self):
+        self.curso = course_mod.load(CURSO)
+        self.st = state_mod.State()
+
+    def test_a_sessao_e_instruida_para_o_tipo_pedido(self):
+        bf = briefing_mod.build(
+            self.curso, self.st, self.curso.node("base-listas"),
+            telemetria=Path("/nao/existe"), tipo="previsao",
+        )
+        self.assertIn("previsão", bf.texto)
+        self.assertIn("ANTES de correr", bf.texto)
+        self.assertNotIn("escreve do zero", bf.texto)
+
+    def test_a_ancora_do_tipo_vai_com_os_valores_de_controlo(self):
+        bf = briefing_mod.build(
+            self.curso, self.st, self.curso.node("base-listas"),
+            telemetria=Path("/nao/existe"), tipo="erro-plantado",
+        )
+        self.assertIn("MaiorQuebrado.java", bf.texto)
+        self.assertIn("-3", bf.texto)                      # the control value
+        self.assertLessEqual(bf.bytes, self.curso.teto_briefing_bytes)
+
+    def test_sem_ancora_do_tipo_nao_inventa_uma(self):
+        bf = briefing_mod.build(
+            self.curso, self.st, self.curso.node("base-listas"),
+            telemetria=Path("/nao/existe"), tipo="previsao",
+        )
+        self.assertNotIn("Âncora", bf.texto)

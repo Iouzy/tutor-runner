@@ -7,6 +7,7 @@ measuring code is the same code that runs for real.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -46,7 +47,12 @@ class ScriptedSession:
         self.relogio = datetime.fromisoformat(f"2026-09-17T{inicio}:00")
         self._usados: dict[str, int] = {}
 
-    def _exercicio(self, node_id: str, retoma: Handoff | None) -> str:
+    def _exercicio(self, node_id: str, retoma: Handoff | None, briefing: str = "") -> str:
+        # A real session would use the anchor the briefing names; this one does too,
+        # so the demo shows the anchor actually arriving.
+        ancora = re.search(r"Âncora \(([^)]+)\):", briefing)
+        if ancora and retoma is None:
+            return ancora.group(1)
         nomes = EXERCICIOS.get(node_id, [f"{node_id}.java"])
         i = self._usados.get(node_id, 0)
         if retoma is None:
@@ -56,7 +62,7 @@ class ScriptedSession:
 
     def run(self, texto_briefing: str, node_id: str, retoma: Handoff | None) -> RawRun:
         beat = self.beats.pop(0)
-        exercicio = self._exercicio(node_id, retoma)
+        exercicio = self._exercicio(node_id, retoma, texto_briefing)
         transcript: list[dict] = [{"papel": "gradus", "texto": texto_briefing[:200] + " …"}]
 
         for i in range(beat.perguntas):

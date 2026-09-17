@@ -21,6 +21,14 @@ class Mastery(IntEnum):
 
 TIPOS_EXERCICIO = ("previsao", "erro-plantado", "construcao", "reescrita", "explicar")
 
+NOMES_TIPO = {
+    "previsao": "previsão",
+    "erro-plantado": "erro plantado",
+    "construcao": "construção",
+    "reescrita": "reescrita",
+    "explicar": "explicar",
+}
+
 
 @dataclass(frozen=True)
 class Anchor:

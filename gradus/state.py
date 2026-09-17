@@ -14,6 +14,7 @@ class NodeState:
     dominio: Mastery = Mastery.POR_TOCAR
     visto_em: str | None = None       # last day this node was worked
     previsoes_seguidas: int = 0        # the simulator's streak; 10 promotes
+    tipos_feitos: dict[str, str] = field(default_factory=dict)   # exercise type -> last day
 
 
 @dataclass
@@ -33,6 +34,9 @@ class State:
     fraquezas: dict[str, WeaknessState] = field(default_factory=dict)
     exercicio_aberto: str | None = None     # the durable unit: survives a session cut
     no_aberto: str | None = None
+    tipo_aberto: str | None = None
+    ultimo_no: str | None = None            # the pair the interleaving rule looks at
+    ultimo_tipo: str | None = None
     passagens: int = 0
 
     def node(self, node_id: str) -> NodeState:
@@ -58,6 +62,7 @@ def load(path: Path) -> State:
                 dominio=Mastery(v["dominio"]),
                 visto_em=v.get("visto_em"),
                 previsoes_seguidas=v.get("previsoes_seguidas", 0),
+                tipos_feitos=dict(v.get("tipos_feitos", {})),
             )
             for k, v in raw.get("nos", {}).items()
         },
@@ -71,6 +76,9 @@ def load(path: Path) -> State:
         },
         exercicio_aberto=raw.get("exercicio_aberto"),
         no_aberto=raw.get("no_aberto"),
+        tipo_aberto=raw.get("tipo_aberto"),
+        ultimo_no=raw.get("ultimo_no"),
+        ultimo_tipo=raw.get("ultimo_tipo"),
         passagens=raw.get("passagens", 0),
     )
 
@@ -79,7 +87,12 @@ def save(path: Path, state: State) -> None:
     payload = {
         "gerado_em": datetime.now().isoformat(timespec="seconds"),
         "nos": {
-            k: {"dominio": int(v.dominio), "visto_em": v.visto_em, "previsoes_seguidas": v.previsoes_seguidas}
+            k: {
+                "dominio": int(v.dominio),
+                "visto_em": v.visto_em,
+                "previsoes_seguidas": v.previsoes_seguidas,
+                "tipos_feitos": dict(sorted(v.tipos_feitos.items())),
+            }
             for k, v in sorted(state.nos.items())
         },
         "fraquezas": {
@@ -88,6 +101,9 @@ def save(path: Path, state: State) -> None:
         },
         "exercicio_aberto": state.exercicio_aberto,
         "no_aberto": state.no_aberto,
+        "tipo_aberto": state.tipo_aberto,
+        "ultimo_no": state.ultimo_no,
+        "ultimo_tipo": state.ultimo_tipo,
         "passagens": state.passagens,
     }
     path.parent.mkdir(parents=True, exist_ok=True)

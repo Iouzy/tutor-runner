@@ -8,7 +8,7 @@ from pathlib import Path
 from . import course as course_mod, state as state_mod
 from .fake import DIA_TIPO, ScriptedSession
 from .loop import Runner
-from .model import CourseError, Mastery
+from .model import NOMES_TIPO, CourseError, Mastery
 from .scheduler import next_node
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -70,7 +70,8 @@ def cmd_demo(args) -> int:
         p, bf = rel.passage, rel.briefing
         rev = " (revisão)" if rel.choice.revisao else ""
         ret = f" {LARANJA}retoma{RESET}" if handoff else ""
-        print(f"{BOLD}▸ {p.id}{RESET}  {p.no}{rev}{ret}  {DIM}— {rel.choice.motivo}{RESET}")
+        tipo = NOMES_TIPO.get(p.tipo, p.tipo)
+        print(f"{BOLD}▸ {p.id}{RESET}  {p.no}  {VERDE}{tipo}{RESET}{rev}{ret}  {DIM}— {rel.choice.motivo}{RESET}")
         print(f"   briefing  {BOLD}{bf.relatorio()}{RESET}")
         for c in rel.compilacoes:
             marca = f"{VERDE}ok{RESET}" if c.ok else f"{VERM}{c.erro}{RESET}"
@@ -115,7 +116,8 @@ def cmd_proximo(args) -> int:
     if not escolha:
         print("nada elegível.")
         return 1
-    print(f"{curso.node(escolha.node_id).nome}  {DIM}— {escolha.motivo}{RESET}")
+    tipo = NOMES_TIPO.get(escolha.tipo, escolha.tipo)
+    print(f"{curso.node(escolha.node_id).nome}  {VERDE}{tipo}{RESET}  {DIM}— {escolha.motivo}{RESET}")
     return 0
 
 
@@ -129,7 +131,10 @@ def cmd_briefing(args) -> int:
     if not escolha:
         print("nada elegível.")
         return 1
-    bf = briefing_mod.build(curso, st, curso.node(escolha.node_id), telemetria=work / "telemetria")
+    bf = briefing_mod.build(
+        curso, st, curso.node(escolha.node_id),
+        telemetria=work / "telemetria", revisao=escolha.revisao, tipo=escolha.tipo,
+    )
     print(bf.texto)
     print(f"\n{DIM}--- {bf.relatorio()} · teto {curso.teto_briefing_bytes} B ---{RESET}")
     return 0

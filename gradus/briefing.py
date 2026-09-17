@@ -4,8 +4,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .model import Course, CourseError, Handoff, Node
+from .model import NOMES_TIPO, Anchor, Course, CourseError, Handoff, Node
 from .state import State
+
+# What the session has to do differently for each kind. One line each: the whole
+# point of typing the exercise is lost if the session reads it as "write code".
+DIRETIVA = {
+    "previsao": "dá-lhe código pronto e pergunta o que sai ANTES de correr; só depois corre.",
+    "erro-plantado": "dá-lhe código que compila e dá o resultado errado; ele encontra o furo.",
+    "construcao": "ele escreve do zero; tu desbloqueias, não escreves.",
+    "reescrita": "ele pega no que já escreveu há dias e simplifica sem mudar o que faz.",
+    "explicar": "ele explica o código dele linha a linha; tu só perguntas.",
+}
 
 # The only paths a briefing may ever draw from. The archive is not here, and a
 # test asserts it never will be: that omission is the whole context economy.
@@ -72,6 +82,11 @@ def _erros_recentes(telemetria: Path, node_id: str, limite: int = 3) -> list[str
     return linhas[-limite:]
 
 
+def _ancora(node: Node, tipo: str) -> Anchor | None:
+    """A hand-written exercise beats an improvised one, and brings its control values."""
+    return next((a for a in node.ancoras if a.tipo == tipo), None)
+
+
 def build(
     course: Course,
     state: State,
@@ -80,14 +95,27 @@ def build(
     telemetria: Path,
     handoff: Handoff | None = None,
     revisao: bool = False,
+    tipo: str = "construcao",
 ) -> Briefing:
     perfil = Slot("perfil", course.perfil, teto=1100)
 
     cabecalho = "REVISÃO (já esteve automático)" if revisao else "EXERCÍCIO"
-    linhas = [f"## {cabecalho}: {node.nome}", f"Objetivo: {node.objetivo}"]
+    linhas = [
+        f"## {cabecalho}: {node.nome} — {NOMES_TIPO.get(tipo, tipo)}",
+        f"Objetivo: {node.objetivo}",
+        f"Tipo: {DIRETIVA.get(tipo, DIRETIVA['construcao'])}",
+    ]
     if node.armadilhas:
         linhas.append("Armadilhas: " + "; ".join(node.armadilhas))
-    no_slot = Slot("nó", "\n".join(linhas), teto=500)
+    ancora = _ancora(node, tipo)
+    if ancora:
+        nome = f" ({ancora.ficheiro})" if ancora.ficheiro else ""
+        linhas.append(f"Âncora{nome}: {ancora.enunciado}")
+        controlo = " · ".join(
+            f"{c.get('entrada', '')} → {c.get('saida', '')}" for c in ancora.controlo
+        )
+        linhas.append(f"Controlo (verifica com isto, não a olho): {controlo}")
+    no_slot = Slot("nó", "\n".join(linhas), teto=700)
 
     ativas = state.fraquezas_ativas()
     if ativas:

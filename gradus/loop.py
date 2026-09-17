@@ -8,7 +8,7 @@ from typing import Protocol
 
 from . import archive, briefing as briefing_mod, event, report, state as state_mod, telemetry
 from .event import Judgement, Passage
-from .model import Course, Handoff, Mastery
+from .model import NOMES_TIPO, Course, Handoff, Mastery
 from .scheduler import Choice, next_node
 
 
@@ -65,6 +65,7 @@ class Runner:
         bf = briefing_mod.build(
             self.course, st, node,
             telemetria=self.telemetria, handoff=handoff, revisao=choice.revisao,
+            tipo=choice.tipo,
         )
 
         raw = session.run(bf.texto, node.id, handoff)
@@ -87,6 +88,7 @@ class Runner:
             no=node.id,
             exercicio=raw.exercicio,
             resultado="passou" if raw.passou else "cortado",
+            tipo=choice.tipo,
             duracao_min=raw.duracao_min,
             compilacoes=len(raw.compilacoes),
             versoes_ate_correr=versoes_ate_correr,
@@ -122,15 +124,21 @@ class Runner:
         ns = st.node(node_id)
         ns.visto_em = dia
         antes = ns.dominio
+        # Only a finished exercise counts as this type done: a cut passage resumes
+        # in the same type, so marking it now would skip it.
         if raw.passou:
+            ns.tipos_feitos[passage.tipo] = dia
+            st.ultimo_no, st.ultimo_tipo = node_id, passage.tipo
             ns.dominio = Mastery(min(int(Mastery.ESCRITO_SOZINHO), int(ns.dominio) + 1))
             st.exercicio_aberto = None
             st.no_aberto = None
+            st.tipo_aberto = None
         else:
             if ns.dominio < Mastery.VISTO:
                 ns.dominio = Mastery.VISTO
             st.exercicio_aberto = raw.exercicio
             st.no_aberto = node_id
+            st.tipo_aberto = passage.tipo
 
         for j in passage.juizos:
             if not j.fraqueza:
@@ -150,7 +158,8 @@ class Runner:
         escolha = next_node(self.course, st)
         proximo = None
         if escolha:
-            proximo = f"{self.course.node(escolha.node_id).nome} ({escolha.motivo})"
+            tipo = NOMES_TIPO.get(escolha.tipo, escolha.tipo)
+            proximo = f"{self.course.node(escolha.node_id).nome} — {tipo} ({escolha.motivo})"
         (self.workdir / "ESTADO.md").write_text(report.estado_md(self.course, st, proximo), encoding="utf-8")
         passagens = event.read_all(self.eventos) if self.eventos.exists() else []
         (self.workdir / "HISTORICO.md").write_text(report.historico_md(self.course, passagens), encoding="utf-8")
