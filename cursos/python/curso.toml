@@ -1,6 +1,7 @@
 nome = "Python do zero"
 linguagem = "python"
 base = "fundamentos"
+resumo = "Os mesmos fundamentos em Python, onde a indentação é o bloco e o input() é sempre texto."
 extensao = ".py"
 
 build = "python3 -m py_compile {ficheiro}"

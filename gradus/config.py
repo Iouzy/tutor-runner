@@ -54,6 +54,8 @@ class CursoDisponivel:
     nome: str
     linguagem: str
     extensao: str
+    resumo: str = ""
+    build: str = ""
 
 
 def disponiveis(raiz: Path) -> list[CursoDisponivel]:
@@ -71,5 +73,7 @@ def disponiveis(raiz: Path) -> list[CursoDisponivel]:
             nome=dados.get("nome", toml.parent.name),
             linguagem=dados.get("linguagem", ""),
             extensao=dados.get("extensao", ""),
+            resumo=dados.get("resumo", ""),
+            build=dados.get("build", ""),
         ))
     return achados

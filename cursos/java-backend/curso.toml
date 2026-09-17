@@ -1,6 +1,7 @@
 nome = "Java backend"
 linguagem = "java"
 base = "fundamentos"
+resumo = "Os fundamentos em Java: tipos, ciclos, listas e objetos, com javac a apanhar-te os erros."
 extensao = ".java"
 estilo_ficheiro = "camel"     # o nome do ficheiro tem de ser o nome da classe
 
