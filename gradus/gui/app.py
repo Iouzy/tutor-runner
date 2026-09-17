@@ -424,7 +424,7 @@ class EcraVerificacao(tk.Frame):
             if c.nome == "regex_erro":
                 self._painel_regex(c).pack(fill="both", expand=True)
             else:
-                self._linha(c).pack(fill="x", pady=(0, 8))
+                self._linha(c).pack(fill="x", pady=(0, 6))
             falhas += int(not c.ok and c.nivel == doctor_mod.ERRO)
         self.estado.config(
             text="Está tudo. Podes começar." if not falhas
@@ -433,15 +433,19 @@ class EcraVerificacao(tk.Frame):
         self.comecar.estado("normal" if not falhas else "disabled")
 
     def _linha(self, check):
-        mau = not check.ok
-        caixa = pecas.cartao(self.lista, borda=tema.LARANJA if mau else tema.LINHA)
+        # Um aviso e um erro com a mesma cor e a mesma marca deixam-no sem saber
+        # qual é o que o impede de começar. A paleta não tem vermelho: o erro fica
+        # com o laranja e a moldura, o aviso fica apagado.
+        bloqueia = not check.ok and check.nivel == doctor_mod.ERRO
+        avisa = not check.ok and not bloqueia
+        marca, cor = ("✓", tema.VERDE) if check.ok else (("✗", tema.LARANJA) if bloqueia else ("!", tema.APAGADO))
+        caixa = pecas.cartao(self.lista, borda=tema.LARANJA if bloqueia else tema.LINHA)
         dentro = tk.Frame(caixa, bg=tema.PAINEL)
-        dentro.pack(fill="x", padx=18, pady=14)
+        dentro.pack(fill="x", padx=18, pady=10)
         cabeca = tk.Frame(dentro, bg=tema.PAINEL)
         cabeca.pack(fill="x")
         tk.Label(
-            cabeca, text="✓" if check.ok else "✗", bg=tema.PAINEL,
-            fg=tema.VERDE if check.ok else tema.LARANJA,
+            cabeca, text=marca, bg=tema.PAINEL, fg=cor,
             font=pecas.fonte(tema.INTERFACE_FORTE), width=2,
         ).pack(side="left")
         tk.Label(
@@ -449,11 +453,11 @@ class EcraVerificacao(tk.Frame):
             font=pecas.fonte(tema.CODIGO_PEQUENO), width=20, anchor="w",
         ).pack(side="left")
         pecas.paragrafo(
-            cabeca, check.detalhe, cor=tema.LARANJA if mau else tema.APAGADO, largura=380
+            cabeca, check.detalhe, cor=tema.LARANJA if bloqueia else tema.APAGADO, largura=380
         ).pack(side="left", fill="x", expand=True)
         if check.conserto:
             conserto = tk.Frame(dentro, bg=tema.PAINEL)
-            conserto.pack(fill="x", pady=(10, 0))
+            conserto.pack(fill="x", pady=(8, 0))
             tk.Label(
                 conserto, text=check.conserto, bg=tema.FUNDO, fg=tema.TEXTO,
                 font=pecas.fonte(tema.CODIGO_PEQUENO), anchor="w", justify="left",
@@ -667,7 +671,11 @@ class EcraEstudo(tk.Frame):
         self._comecar() if self.estudo.abertura is None else self._terminar(True)
 
     def _comecar(self) -> None:
-        abertura = self.estudo.comecar()
+        try:
+            abertura = self.estudo.comecar()
+        except CourseError as exc:
+            messagebox.showerror("gradus", str(exc))
+            return
         if abertura is None:
             messagebox.showinfo(
                 "gradus", "Não há nada elegível no grafo por agora. Volta daqui a uns dias."

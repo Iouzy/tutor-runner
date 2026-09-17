@@ -28,6 +28,15 @@ def _work(args) -> Path:
     return RAIZ / "trabalho" / Path(args.curso).name
 
 
+def _limpar(work: Path) -> None:
+    """Apaga o que se regenera e mais nada. `exercicios/` é o código que ele
+    escreveu — a única coisa aqui que nenhum comando consegue voltar a produzir."""
+    for pasta in ("eventos", "telemetria", "arquivo"):
+        shutil.rmtree(work / pasta, ignore_errors=True)
+    for ficheiro in ("estado.json", "ESTADO.md", "HISTORICO.md"):
+        (work / ficheiro).unlink(missing_ok=True)
+
+
 def _semear(runner: Runner) -> None:
     """Where the real repo is today: fundamentals solid, arrays untouched."""
     st = state_mod.State()
@@ -49,7 +58,7 @@ def cmd_demo(args) -> int:
     curso, curso_dir = _course(args)
     work = _work(args)
     if work.exists() and args.limpar:
-        shutil.rmtree(work)
+        _limpar(work)
     work.mkdir(parents=True, exist_ok=True)
 
     runner = Runner(curso, curso_dir, work)
@@ -252,7 +261,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--trabalho", default=None, help="por omissão, trabalho/<curso>/")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("demo", help="corre um dia de estudo inteiro, sem modelo e sem rede")
-    d.add_argument("--limpar", action="store_true", help="apaga o trabalho anterior primeiro")
+    d.add_argument(
+        "--limpar", action="store_true",
+        help="apaga o registo anterior (eventos, telemetria, arquivo, estado) — nunca exercicios/",
+    )
     d.set_defaults(func=cmd_demo)
     sub.add_parser("proximo", help="que exercício vem a seguir, e porquê").set_defaults(func=cmd_proximo)
     sub.add_parser("briefing", help="imprime o contexto exato que a próxima sessão recebe").set_defaults(func=cmd_briefing)

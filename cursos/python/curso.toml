@@ -7,7 +7,7 @@ extensao = ".py"
 build = "python3 -m py_compile {ficheiro}"
 run = "python3 {ficheiro}"
 # Em Python o sinal está quase todo no run: py_compile só apanha sintaxe.
-regex_erro = "(?P<msg>\\w+(?:Error|Exception): .+)$"
+regex_erro = '(?s)(?:File "(?P<ficheiro>[^"]+)", line (?P<linha>\d+).*?)?^(?P<msg>\w+(?:Error|Exception): .+?)$'
 
 teto_briefing_bytes = 2048
 teto_bilhete_bytes = 400
