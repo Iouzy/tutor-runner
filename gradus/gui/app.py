@@ -32,12 +32,13 @@ class App(tk.Tk):
         self.trabalho_raiz = trabalho
         self.seco = seco
         self.title("gradus")
-        self.geometry("1280x860")
-        self.minsize(1040, 700)
         self.configure(bg=tema.FUNDO)
         self.respostas: dict[str, str] = {}
         self.config_atual = config_mod.load(raiz)
         _fixar_fontes(self)
+        self.largura, self.altura = self.cabe(1280, 860)
+        self.geometry(f"{self.largura}x{self.altura}")
+        self.minsize(*self.cabe(1040, 700))
         self.container = tk.Frame(self, bg=tema.FUNDO)
         self.container.pack(fill="both", expand=True)
         self.mostrar(EcraLinguagem if self.config_atual is None else EcraEstudo)
@@ -47,6 +48,7 @@ class App(tk.Tk):
             filho.destroy()
         ecra = classe(self.container, self, **kw)
         ecra.pack(fill="both", expand=True)
+        self.crescer(ecra)
 
     # --- work off the main loop ------------------------------------------
     def em_fundo(self, funcao, quando_acabar) -> None:
@@ -76,6 +78,30 @@ class App(tk.Tk):
 
         self.after(100, espreitar)
 
+    def cabe(self, largura: int, altura: int) -> tuple[int, int]:
+        """Nunca maior do que o ecrã: uma janela que não cabe é uma janela com o
+        rodapé de fora, e o rodapé é onde se vê o que a sessão está a custar."""
+        return (
+            min(largura, int(self.winfo_screenwidth() * 0.96)),
+            min(altura, int(self.winfo_screenheight() * 0.90)),
+        )
+
+    def crescer(self, ecra: tk.Widget) -> None:
+        """A janela é medida em pixéis, mas quem desenha a letra é o servidor de
+        fontes, na DPI do ecrã. Num ecrã HiDPI o mesmo desenho pede o dobro dos
+        pixéis, o pack fica sem espaço e encolhe o rodapé e os botões a uma linha
+        de um pixel — botões que existem e em que ninguém consegue carregar. Por
+        isso a janela cresce até ao que o ecrã que está lá dentro pede. Nunca
+        encolhe: o tamanho do desenho é o mínimo, não o alvo."""
+        self.update_idletasks()
+        largura, altura = self.cabe(
+            max(self.largura, ecra.winfo_reqwidth()),
+            max(self.altura, ecra.winfo_reqheight()),
+        )
+        if (largura, altura) != (self.largura, self.altura):
+            self.largura, self.altura = largura, altura
+            self.geometry(f"{largura}x{altura}")
+
     def curso(self):
         cfg = self.config_atual or config_mod.load(self.raiz)
         if cfg is None:
@@ -98,19 +124,30 @@ def _fonte(spec):
     return (tema.ALTERNATIVAS.get(familia, (familia,))[0], *resto)
 
 
+def _quebrar(rotulo):
+    """Um Label não quebra sozinho: sem isto a pergunta mais comprida perde as
+    últimas palavras pela direita fora, e é a pergunta que ele tem de ler."""
+    def ajustar(evento):
+        if evento.width > 1 and int(rotulo.cget("wraplength")) != evento.width:
+            rotulo.config(wraplength=evento.width)
+
+    rotulo.bind("<Configure>", ajustar)
+    return rotulo
+
+
 def titulo(pai, texto, grande=False):
-    return tk.Label(
+    return _quebrar(tk.Label(
         pai, text=texto, bg=pai["bg"], fg=tema.TEXTO,
         font=_fonte(tema.TITULO_GRANDE if grande else tema.TITULO),
         anchor="w", justify="left",
-    )
+    ))
 
 
 def legenda(pai, texto, cor=tema.APAGADO, fonte=None):
-    return tk.Label(
+    return _quebrar(tk.Label(
         pai, text=texto, bg=pai["bg"], fg=cor, font=_fonte(fonte or tema.INTERFACE),
         anchor="w", justify="left", wraplength=760,
-    )
+    ))
 
 
 def botao(pai, texto, comando, principal=False, estado="normal"):
@@ -310,9 +347,11 @@ class EcraVerificacao(tk.Frame):
         if check.conserto:
             fundo = tk.Frame(caixa, bg=tema.PAINEL)
             fundo.pack(fill="x", padx=16, pady=(6, 12))
-            tk.Label(fundo, text=check.conserto, bg=tema.FUNDO, fg=tema.TEXTO,
-                     font=_fonte(tema.CODIGO_PEQUENO), anchor="w", padx=10, pady=8,
-                     wraplength=820, justify="left").pack(side="left", fill="x", expand=True)
+            _quebrar(tk.Label(
+                fundo, text=check.conserto, bg=tema.FUNDO, fg=tema.TEXTO,
+                font=_fonte(tema.CODIGO_PEQUENO), anchor="w", padx=10, pady=8,
+                wraplength=820, justify="left",
+            )).pack(side="left", fill="x", expand=True)
             botao(fundo, "Copiar", lambda t=check.conserto: self._copiar(t)).pack(side="left", padx=(8, 0))
         else:
             tk.Frame(caixa, bg=tema.PAINEL, height=12).pack(fill="x")
@@ -354,8 +393,8 @@ class EcraEstudo(tk.Frame):
     def _topo(self):
         linha = tk.Frame(self, bg=tema.FUNDO)
         tk.Label(linha, text="gradus", bg=tema.FUNDO, fg=tema.TEXTO, font=_fonte(tema.TITULO)).pack(side="left")
-        self.etiqueta_no = tk.Label(linha, text="", bg=tema.FUNDO, fg=tema.APAGADO, font=_fonte(tema.INTERFACE))
-        self.etiqueta_no.pack(side="left", padx=16)
+        # Os botões primeiro: o pack serve quem vem à frente, e o motivo da escolha
+        # é comprido. Ao contrário, um motivo comprido deixava-os com sete pixéis.
         self.botao_comecar = botao(linha, "Começar exercício", self._comecar, principal=True)
         self.botao_comecar.pack(side="right")
         self.botao_passou = botao(linha, "Passou", lambda: self._terminar(True), estado="disabled")
@@ -363,6 +402,11 @@ class EcraEstudo(tk.Frame):
         self.botao_cortar = botao(linha, "Cortar aqui", lambda: self._terminar(False), estado="disabled")
         self.botao_cortar.pack(side="right")
         botao(linha, "Simulador", self._simulador).pack(side="right", padx=8)
+        self.etiqueta_no = _quebrar(tk.Label(
+            linha, text="", bg=tema.FUNDO, fg=tema.APAGADO, font=_fonte(tema.INTERFACE),
+            anchor="w", justify="left",
+        ))
+        self.etiqueta_no.pack(side="left", padx=16, fill="x", expand=True)
         return linha
 
     def _conversa(self, pai):
@@ -370,6 +414,7 @@ class EcraEstudo(tk.Frame):
         self.texto_conversa = tk.Text(
             caixa, bg=tema.PAINEL, fg=tema.TEXTO, font=_fonte(tema.INTERFACE), relief="flat",
             padx=16, pady=14, wrap="word", state="disabled", highlightthickness=0,
+            width=1, height=1,          # estica: quem manda no tamanho é o painel
         )
         self.texto_conversa.pack(fill="both", expand=True)
         self.texto_conversa.tag_configure("gradus", foreground=tema.TEXTO, spacing3=10)
@@ -398,12 +443,14 @@ class EcraEstudo(tk.Frame):
         self.etiqueta_ficheiro.pack(side="left")
         self.botao_compilar = botao(topo, "Compilar e correr", self._compilar, principal=True, estado="disabled")
         self.botao_compilar.pack(side="right")
-        botao(topo, "Guardar", self._guardar).pack(side="right", padx=8)
+        self.botao_guardar = botao(topo, "Guardar", self._guardar, estado="disabled")
+        self.botao_guardar.pack(side="right", padx=8)
 
         self.editor = tk.Text(
             caixa, bg=tema.PAINEL, fg=tema.TEXTO, insertbackground=tema.LARANJA,
             font=_fonte(tema.CODIGO), relief="flat", padx=14, pady=12, wrap="none",
             highlightthickness=0, undo=True,
+            width=1, height=1,          # estica: quem manda no tamanho é o painel
         )
         self.editor.pack(fill="both", expand=True)
         return caixa
@@ -414,6 +461,7 @@ class EcraEstudo(tk.Frame):
         self.texto_saida = tk.Text(
             caixa, bg=tema.FUNDO, fg=tema.APAGADO, font=_fonte(tema.CODIGO_PEQUENO), relief="flat",
             padx=14, pady=12, wrap="word", state="disabled", highlightthickness=0,
+            width=1, height=1,          # a caixa é que tem altura fixa, não o texto
         )
         self.texto_saida.pack(fill="both", expand=True)
         self.texto_saida.tag_configure("erro", foreground=tema.LARANJA)
@@ -514,6 +562,7 @@ class EcraEstudo(tk.Frame):
     def _terminou(self, relatorio) -> None:
         self._trancar(False)
         self.botao_compilar.config(state="disabled")
+        self.botao_guardar.config(state="disabled")
         self.botao_passou.config(state="disabled")
         self.botao_cortar.config(state="disabled")
         if relatorio is None:
@@ -555,6 +604,7 @@ class EcraEstudo(tk.Frame):
         a_decorrer = self.estudo.abertura is not None
         estado = "disabled" if ocupado or not a_decorrer else "normal"
         self.botao_compilar.config(state=estado)
+        self.botao_guardar.config(state=estado)
         self.botao_passou.config(state=estado)
         self.botao_cortar.config(state=estado)
         self.botao_comecar.config(state="disabled" if ocupado or a_decorrer else "normal")
@@ -587,7 +637,7 @@ class JanelaSimulador(tk.Toplevel):
     def __init__(self, pai, curso, trabalho: Path, node_id: str, exercicio: str) -> None:
         super().__init__(pai, bg=tema.FUNDO)
         self.title("gradus · simulador")
-        self.geometry("720x760")
+        self.geometry("%dx%d" % pai.app.cabe(720, 760))
         self.app = pai.app
         self.sim = Simulacao(curso, trabalho, node_id, exercicio)
 
@@ -616,6 +666,10 @@ class JanelaSimulador(tk.Toplevel):
 
         self.resposta = legenda(self, "")
         self.resposta.pack(fill="x", padx=24, pady=(0, 20))
+        self.update_idletasks()
+        self.geometry("%dx%d" % pai.app.cabe(
+            max(720, self.winfo_reqwidth()), max(760, self.winfo_reqheight())
+        ))
         self._proxima()
 
     def _proxima(self) -> None:
