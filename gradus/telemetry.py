@@ -30,6 +30,10 @@ class Erro:
     pelo_regex: bool        # False: the course's regex missed and this is the raw line
 
 
+def hora() -> str:
+    return datetime.now().strftime("%H:%M")
+
+
 def extrair_erro(stderr: str, regex_erro: str) -> Erro:
     """Normalises what the compiler said, and says whether the regex did the work.
 
