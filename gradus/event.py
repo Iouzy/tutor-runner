@@ -40,6 +40,8 @@ class Passage:
     msgs_total: int = 0
     kb_contexto: float = 0.0
     briefing_bytes: int = 0
+    tokens: int = 0                      # contados pelo CLI, não declarados pelo modelo
+    custo_usd: float = 0.0
     motivo_corte: str = ""
     # --- declared by the model ---
     juizos: list[Judgement] = field(default_factory=list)

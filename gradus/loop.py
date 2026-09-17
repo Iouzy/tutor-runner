@@ -26,6 +26,9 @@ class RawRun:
     handoff: Handoff | None = None
     juizos: list[Judgement] = field(default_factory=list)
     duvidas_novas: list[str] = field(default_factory=list)
+    ja_registadas: bool = False     # the workspace already wrote them as they happened
+    tokens: int = 0
+    custo_usd: float = 0.0
 
 
 class Session(Protocol):
@@ -70,8 +73,9 @@ class Runner:
 
         raw = session.run(bf.texto, node.id, handoff)
 
-        for comp in raw.compilacoes:
-            telemetry.record(self.telemetria, comp)
+        if not raw.ja_registadas:
+            for comp in raw.compilacoes:
+                telemetry.record(self.telemetria, comp)
 
         st.passagens += 1
         pid = f"p{st.passagens:02d}"
@@ -97,6 +101,8 @@ class Runner:
             kb_contexto=raw.kb_contexto,
             briefing_bytes=bf.bytes,
             motivo_corte="" if raw.passou else self._motivo(raw),
+            tokens=raw.tokens,
+            custo_usd=raw.custo_usd,
             juizos=raw.juizos,
             duvidas_novas=raw.duvidas_novas,
         )
