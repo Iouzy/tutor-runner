@@ -173,29 +173,52 @@ DIA_TIPO = [
 ]
 
 
+ABERTURA_SECA = {
+    "previsao": "Lê o código do enunciado e diz-me o que achas que ele escreve — antes de o correres.",
+    "erro-plantado": "Este programa compila e dá o resultado errado. Lê-o e diz-me onde achas que está o furo.",
+    "construcao": "Escreve do zero. Começa pela primeira linha que souberes escrever, mesmo que não seja a primeira do programa.",
+    "reescrita": "Pega no que já escreveste e torna-o mais simples, sem mudar o que ele faz.",
+    "explicar": "Explica-me o teu código linha a linha. Eu só pergunto.",
+}
+
+# A sessão seca não pensa. Estas frases existem para o ciclo poder ser percorrido
+# sem gastar uma sessão a sério — e são várias porque uma só, repetida, parece
+# uma avaria em vez de um boneco.
+RESPOSTAS_SECAS = (
+    "Escreve isso no editor e carrega em «Compilar e correr».",
+    "Corre outra vez e lê a mensagem do compilador toda, até ao fim.",
+    "Não te adianto nada: sou um boneco. Numa sessão a sério é aqui que vinha a pista.",
+    "Vai por partes: qual é a primeira linha de que tens a certeza?",
+)
+
+
 class ConversaSeca:
     """A dry stand-in for a real cold session, for trying the interface without
     spending a single one. Same seam as `conversation.Conversa`."""
 
-    def __init__(self, briefing: str, node_id: str, exercicio: str, teto_kb: float = 15.0) -> None:
+    def __init__(self, briefing: str, node_id: str, exercicio: str, teto_kb: float = 15.0,
+                 tipo: str = "construcao") -> None:
         self.briefing = briefing
         self.node_id = node_id
         self.exercicio = exercicio
         self.teto_kb = teto_kb
+        self.tipo = tipo
         self.transcript: list[dict] = []
         self.compilacoes: list[Compilation] = []
         self.inicio = datetime.now()
+        self._volta = 0
 
     def abrir(self) -> str:
         self.transcript.append({"papel": "gradus", "texto": self.briefing})
         return self._responder(
-            "(sessão seca: não há modelo nenhum do outro lado)\n"
-            "Olha para o enunciado e diz-me o que achas que o programa vai escrever."
+            "(sessão seca: não há modelo nenhum do outro lado, as respostas são fixas)\n"
+            + ABERTURA_SECA.get(self.tipo, ABERTURA_SECA["construcao"])
         )
 
     def dizer(self, texto: str) -> str:
         self.transcript.append({"papel": "aluno", "texto": texto})
-        return self._responder("Escreve isso no editor e carrega em Compilar e correr.")
+        self._volta += 1
+        return self._responder(RESPOSTAS_SECAS[self._volta % len(RESPOSTAS_SECAS)])
 
     def tentativa(self, attempt, codigo: str) -> str:
         self.transcript.append({"papel": "aluno", "texto": f"```\n{codigo.strip()}\n```"})
@@ -205,8 +228,11 @@ class ConversaSeca:
         )
         self.transcript.append({"papel": "sistema", "texto": attempt.erro or attempt.saida})
         if attempt.erro:
-            return self._responder(f"O compilador diz: {attempt.erro}. Onde é que isso acontece?")
-        return self._responder("Correu. Compara o que saiu com o que tinhas previsto.")
+            return self._responder(f"O compilador diz: {attempt.erro}\nOnde é que isso acontece?")
+        return self._responder(
+            "Correu. Compara o que saiu com o que tinhas previsto — e se bateu certo, "
+            "carrega em «Passou»."
+        )
 
     def deve_cortar(self) -> bool:
         return self.kb >= self.teto_kb

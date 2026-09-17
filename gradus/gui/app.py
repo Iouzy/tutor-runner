@@ -670,7 +670,8 @@ class EcraEstudo(tk.Frame):
     def _dialogo(self, abertura, exercicio):
         if self.app.seco:
             return ConversaSeca(
-                abertura.briefing.texto, abertura.node.id, exercicio, self.curso.teto_contexto_kb
+                abertura.briefing.texto, abertura.node.id, exercicio,
+                self.curso.teto_contexto_kb, abertura.choice.tipo,
             )
         return Conversa(
             course=self.curso, claude=Claude(), node_id=abertura.node.id,
