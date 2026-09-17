@@ -25,6 +25,11 @@ TETO_FRAQUEZAS = 400
 TETO_ERROS = 450
 MARGEM_BILHETE = 120        # the note's cap is the JSON's; the slot adds its wrapper
 
+# When the whole does not fit, these go, in this order. A briefing that dies over
+# budget kills the study session; one that arrives lighter only costs what it says
+# it dropped. The node itself is never droppable — without it there is no exercise.
+ORDEM_DE_CORTE = ("perfil", "fraquezas", "erros", "bilhete")
+
 # The only paths a briefing may ever draw from. The archive is not here, and a
 # test asserts it never will be: that omission is the whole context economy.
 FONTES_PERMITIDAS = ("perfil.md", "grafo.toml", "curso.toml", "estado.json", "telemetria/")
@@ -45,6 +50,7 @@ class Slot:
 class Briefing:
     slots: list[Slot] = field(default_factory=list)
     teto_total: int = 2048
+    descartados: list[str] = field(default_factory=list)
 
     @property
     def texto(self) -> str:
@@ -56,20 +62,38 @@ class Briefing:
 
     def relatorio(self) -> str:
         partes = " · ".join(f"{s.nome} {s.bytes}" for s in self.slots if s.texto)
-        return f"{self.bytes} B  [{partes}]"
+        largado = f" · largado: {', '.join(self.descartados)}" if self.descartados else ""
+        return f"{self.bytes} B  [{partes}{largado}]"
 
-    def check(self) -> None:
-        """Fail loudly: a briefing over budget is the one bug that hides itself."""
+    def check_slots(self) -> None:
+        """A single source over its own ceiling is a bug in that source, not a full
+        briefing: it stays loud, because a note that grew into a transcript is not
+        something to quietly trim."""
         for s in self.slots:
             if s.bytes > s.teto:
                 raise CourseError(
                     f"o slot '{s.nome}' tem {s.bytes} B e o teto é {s.teto} B — "
                     f"encurta a fonte, não subas o teto sem pensar"
                 )
+
+    def cortar(self) -> None:
+        """Drops whole slots, lowest value first, until the briefing fits."""
+        for nome in ORDEM_DE_CORTE:
+            if self.bytes <= self.teto_total:
+                return
+            slot = next((s for s in self.slots if s.nome == nome and s.texto), None)
+            if slot is None:
+                continue
+            slot.texto = ""
+            self.descartados.append(nome)
+
+    def check(self) -> None:
+        """Fail loudly: a briefing over budget is the one bug that hides itself."""
+        self.check_slots()
         if self.bytes > self.teto_total:
             raise CourseError(
-                f"briefing com {self.bytes} B, teto {self.teto_total} B — "
-                f"corta um slot ou baixa o nº de erros recentes incluídos"
+                f"briefing com {self.bytes} B, teto {self.teto_total} B, e já não há o que "
+                f"largar — encurta o nó (objetivo, armadilhas, âncora) ou sobe teto_briefing_bytes"
             )
 
 
@@ -154,5 +178,7 @@ def build(
         slots.append(Slot("bilhete", "\n".join(corpo), teto=course.teto_bilhete_bytes + MARGEM_BILHETE))
 
     briefing = Briefing(slots=slots, teto_total=course.teto_briefing_bytes)
+    briefing.check_slots()
+    briefing.cortar()
     briefing.check()
     return briefing

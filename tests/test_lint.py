@@ -81,10 +81,19 @@ class TestLint(unittest.TestCase):
         achados = lint.check(curso(weaknesses={"w": Weakness(id="w", nome="W", descricao="d")}))
         self.assertTrue(any("'w'" in p for p in problemas(achados, lint.AVISO)))
 
-    def test_orcamento_do_pior_dia(self):
-        """The check that matters: it fits today, and dies on the day he needs it."""
-        self.assertEqual(problemas(lint.check(curso(teto_briefing_bytes=400)), lint.ERRO)[0][:10], "no pior ca")
-        self.assertEqual(problemas(lint.check(curso(teto_briefing_bytes=4096)), lint.ERRO), [])
+    def test_no_pior_dia_diz_o_que_se_perde(self):
+        """The check that matters: it fits today — what does it lose on a bad day?"""
+        achados = lint.check(curso(teto_briefing_bytes=700))
+        self.assertTrue(any("larga: perfil" in p for p in problemas(achados, lint.AVISO)))
+        self.assertEqual(problemas(achados, lint.ERRO), [])
+
+    def test_um_no_gordo_de_mais_nao_cabe_de_maneira_nenhuma(self):
+        gordo = Node(id="a", nome="A", objetivo="o " * 200, tipos=("construcao",))
+        achados = lint.check(curso(nodes={"a": gordo}, teto_briefing_bytes=300))
+        self.assertTrue(problemas(achados, lint.ERRO))
+
+    def test_um_teto_folgado_nao_se_queixa(self):
+        self.assertEqual(lint.check(curso(teto_briefing_bytes=4096)), [])
 
     def test_no_curso_de_java_so_o_orcamento_e_que_se_queixa(self):
         java = course_mod.load(CURSO)

@@ -25,9 +25,15 @@ Python 3.11+ (tomllib). **Sem dependências**, por desenho.
 
 | Camada | Tamanho | Quem a lê |
 |---|---|---|
-| `briefing` | ~2 KB, com teto verificado | a sessão do Claude |
+| `briefing` | ~2 KB, com teto garantido | a sessão do Claude |
 | `eventos/` + `telemetria/` | KB | as regras, sem modelo |
 | `arquivo/` | MB | ninguém, até alguém pedir |
+
+Quando não cabe tudo, o montador larga slots inteiros por ordem de valor —
+perfil, fraquezas, erros, bilhete — e diz no relatório o que largou. O nó nunca
+se larga: sem ele não há exercício. Uma fonte que rebenta o seu próprio teto
+continua a falhar alto, porque um bilhete que virou transcrição é um bug, não
+um dia gordo.
 
 O arquivo só custa zero contexto porque nada o lê. `tests/test_guard.py` falha
 se alguma vez entrar na allowlist do montador de briefings.
@@ -62,9 +68,10 @@ certas) leva um nó a `automático`. Ter commit não é saber.
 `gradus lint` lê o curso e responde à única pergunta que interessa antes de o
 usar: **no pior dia que este curso pode ter, ainda funciona?** Confere os campos
 dos comandos, os grupos do `regex_erro`, as âncoras (linguagem certa, tipo que o
-nó pede, valores de controlo completos) e soma o briefing mais gordo possível —
-perfil, nó, fraquezas todas ativas, erros no teto e bilhete de retoma — contra o
-teto. Não corre nada: tocar na máquina é trabalho do `doctor`.
+nó pede, valores de controlo completos) e monta o briefing mais gordo possível —
+nó, fraquezas todas ativas, erros no teto e bilhete de retoma — para dizer o que
+é que esse dia perde, ou se nem largando tudo cabe. Não corre nada: tocar na
+máquina é trabalho do `doctor`.
 
 ## Agnóstico
 

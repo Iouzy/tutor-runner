@@ -152,27 +152,47 @@ def _estado_cheio(course: Course) -> State:
     return st
 
 
+def _encher(bf: briefing_mod.Briefing, course: Course) -> int:
+    """The worst day this course can have: every optional slot at its ceiling."""
+    for slot in bf.slots:
+        if slot.nome == "erros":
+            slot.texto = "e" * briefing_mod.TETO_ERROS
+    teto_bilhete = course.teto_bilhete_bytes + briefing_mod.MARGEM_BILHETE
+    bf.slots.append(briefing_mod.Slot("bilhete", "b" * teto_bilhete, teto=teto_bilhete))
+    return bf.bytes
+
+
 def _orcamento(course: Course) -> list[Finding]:
-    """A briefing that only fits on a good day is a session that dies on a bad one."""
+    """It fits today; the question is whether it still fits on the day he needs it."""
     st = _estado_cheio(course)
-    fixo = 2 + briefing_mod.TETO_ERROS + 2 + course.teto_bilhete_bytes + briefing_mod.MARGEM_BILHETE
-    pior, onde = 0, ""
-    achados = []
+    achados: list[Finding] = []
+    pior: tuple[int, str, list[str]] = (0, "", [])
     for node in course.nodes.values():
         for tipo in node.tipos or ("construcao",):
             try:
                 bf = briefing_mod.build(course, st, node, telemetria=Path("/sem/telemetria"), tipo=tipo)
             except CourseError as exc:
-                achados.append(Finding(ERRO, node.id, str(exc).split(" — ")[0], str(exc).split(" — ")[-1]))
+                partes = str(exc).split(" — ")
+                achados.append(Finding(ERRO, f"{node.id}/{tipo}", partes[0], partes[-1]))
                 continue
-            if bf.bytes + fixo > pior:
-                pior, onde = bf.bytes + fixo, f"{node.id}/{tipo}"
-    if pior > course.teto_briefing_bytes:
+            bruto = _encher(bf, course)
+            bf.cortar()
+            onde = f"{node.id}/{tipo}"
+            if bf.bytes > course.teto_briefing_bytes:
+                achados.append(Finding(
+                    ERRO, onde,
+                    f"nem largando tudo o briefing cabe: {bf.bytes} B contra {course.teto_briefing_bytes} B",
+                    "encurta o nó — objetivo, armadilhas ou enunciado da âncora",
+                ))
+            elif (len(bf.descartados), bruto) > (len(pior[2]), pior[0]):
+                pior = (bruto, onde, list(bf.descartados))
+    if pior[2]:
         achados.append(Finding(
-            ERRO, onde,
-            f"no pior caso o briefing dá {pior} B e o teto é {course.teto_briefing_bytes} B",
-            f"corta {pior - course.teto_briefing_bytes} B (perfil, armadilhas ou âncora) "
-            f"ou sobe teto_briefing_bytes para {pior}",
+            AVISO, pior[1],
+            f"no pior dia o briefing pede {pior[0]} B (teto {course.teto_briefing_bytes}) "
+            f"e larga: {', '.join(pior[2])}",
+            f"é de propósito e vai dito no relatório; se {pior[2][0]} faz falta nesse dia, "
+            f"encurta-o ou sobe teto_briefing_bytes para {pior[0]}",
         ))
     return achados
 
