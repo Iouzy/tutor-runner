@@ -20,7 +20,7 @@ from ..conversation import Conversa
 from ..fake import ConversaSeca
 from ..model import CourseError
 from . import tema
-from .controller import PERGUNTAS, Estudo, escolher_curso, guardar_perfil
+from .controller import PERGUNTAS, Estudo, Simulacao, escolher_curso, guardar_perfil
 
 
 class App(tk.Tk):
@@ -362,6 +362,7 @@ class EcraEstudo(tk.Frame):
         self.botao_passou.pack(side="right", padx=8)
         self.botao_cortar = botao(linha, "Cortar aqui", lambda: self._terminar(False), estado="disabled")
         self.botao_cortar.pack(side="right")
+        botao(linha, "Simulador", self._simulador).pack(side="right", padx=8)
         return linha
 
     def _conversa(self, pai):
@@ -558,6 +559,17 @@ class EcraEstudo(tk.Frame):
         self.botao_cortar.config(state=estado)
         self.botao_comecar.config(state="disabled" if ocupado or a_decorrer else "normal")
 
+    def _simulador(self) -> None:
+        if not self.estudo.exercicio or not self.estudo.caminho_exercicio().exists():
+            messagebox.showinfo(
+                "gradus",
+                "O simulador faz perguntas sobre código que tu escreveste. "
+                "Acaba um exercício primeiro.",
+            )
+            return
+        no = self.estudo.abertura.node.id if self.estudo.abertura else ""
+        JanelaSimulador(self, self.curso, self.trabalho, no, self.estudo.exercicio)
+
     def _pintar_rodape(self) -> None:
         r = self.estudo.rodape()
         self.etiqueta_briefing.config(text=f"briefing {r.briefing}" if r.briefing else "")
@@ -566,6 +578,78 @@ class EcraEstudo(tk.Frame):
         )
         self.etiqueta_contexto.config(text=f"{r.kb:.1f} / {r.teto_kb:.0f} KB")
         self.cheio.config(width=int(180 * r.cheio), bg=tema.LARANJA if r.cheio > 0.8 else tema.VERDE)
+
+
+class JanelaSimulador(tk.Toplevel):
+    """Dez seguidas certas sobre o ficheiro dele. Nada aqui pergunta a um modelo:
+    a resposta certa saiu de correr o código."""
+
+    def __init__(self, pai, curso, trabalho: Path, node_id: str, exercicio: str) -> None:
+        super().__init__(pai, bg=tema.FUNDO)
+        self.title("gradus · simulador")
+        self.geometry("720x760")
+        self.app = pai.app
+        self.sim = Simulacao(curso, trabalho, node_id, exercicio)
+
+        titulo(self, "O que é que ele escreve agora?").pack(fill="x", padx=24, pady=(24, 4))
+        self.etiqueta_conta = legenda(self, "")
+        self.etiqueta_conta.pack(fill="x", padx=24)
+        self.etiqueta_pergunta = legenda(self, "a preparar…", cor=tema.TEXTO)
+        self.etiqueta_pergunta.pack(fill="x", padx=24, pady=(16, 8))
+
+        self.codigo = tk.Text(
+            self, bg=tema.PAINEL, fg=tema.TEXTO, font=_fonte(tema.CODIGO_PEQUENO), relief="flat",
+            padx=14, pady=12, wrap="none", state="disabled", height=18, highlightthickness=0,
+        )
+        self.codigo.pack(fill="both", expand=True, padx=24)
+
+        baixo = tk.Frame(self, bg=tema.FUNDO)
+        baixo.pack(fill="x", padx=24, pady=16)
+        self.entrada = tk.Entry(
+            baixo, bg=tema.PAINEL, fg=tema.TEXTO, insertbackground=tema.LARANJA,
+            font=_fonte(tema.CODIGO), relief="flat", highlightbackground=tema.LINHA,
+            highlightthickness=1,
+        )
+        self.entrada.pack(side="left", fill="x", expand=True, ipady=8, padx=(0, 8))
+        self.entrada.bind("<Return>", lambda _: self._responder())
+        botao(baixo, "Responder", self._responder, principal=True).pack(side="left")
+
+        self.resposta = legenda(self, "")
+        self.resposta.pack(fill="x", padx=24, pady=(0, 20))
+        self._proxima()
+
+    def _proxima(self) -> None:
+        self.entrada.delete(0, "end")
+        self.etiqueta_pergunta.config(text="a preparar a próxima…")
+        self.app.em_fundo(self.sim.proxima, self._mostrar)
+
+    def _mostrar(self, previsao) -> None:
+        if previsao is None:
+            self.etiqueta_pergunta.config(
+                text="Não consegui mudar nada neste ficheiro que ainda corresse. Escreve mais um bocado."
+            )
+            return
+        self.etiqueta_pergunta.config(text=previsao.pergunta)
+        self.codigo.config(state="normal")
+        self.codigo.delete("1.0", "end")
+        self.codigo.insert("1.0", previsao.codigo)
+        self.codigo.config(state="disabled")
+        self.entrada.focus_set()
+
+    def _responder(self) -> None:
+        if self.sim.atual is None:
+            return
+        r = self.sim.responder(self.entrada.get())
+        if r.certo:
+            self.resposta.config(text=f"certo · {r.seguidas} seguidas, faltam {r.em_falta}", fg=tema.VERDE)
+        else:
+            self.resposta.config(text=f"não — era: {r.certa}. A conta volta a zero.", fg=tema.LARANJA)
+        self.etiqueta_conta.config(text=f"{r.seguidas} de 10")
+        if r.promocao:
+            messagebox.showinfo("gradus", r.promocao)
+            self.destroy()
+            return
+        self.after(1200, self._proxima)
 
 
 def correr(raiz: Path, trabalho: Path | None = None, seco: bool = False) -> int:

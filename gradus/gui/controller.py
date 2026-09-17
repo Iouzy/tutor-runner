@@ -11,7 +11,10 @@ from datetime import date
 from pathlib import Path
 from typing import Callable, Protocol
 
-from .. import briefing as briefing_mod, config as config_mod, course as course_mod, state as state_mod
+from .. import (
+    briefing as briefing_mod, config as config_mod, course as course_mod,
+    simulator as simulator_mod, state as state_mod,
+)
 from ..loop import Abertura, PassageReport, RawRun, Runner
 from ..model import Course, CourseError, Handoff, Node
 from ..workspace import Attempt, Workspace
@@ -289,3 +292,49 @@ def esqueleto(course: Course, abertura: Abertura) -> str:
         "",
     ]
     return "\n".join(linhas)
+
+
+# --- o simulador -----------------------------------------------------------
+@dataclass
+class Resultado:
+    certo: bool
+    certa: str
+    promocao: str | None
+    seguidas: int
+    em_falta: int
+
+
+class Simulacao:
+    """Ten in a row, about his own file. The questions come out of the file and the
+    answers out of the machine — the whole point is that nobody's opinion is in it."""
+
+    def __init__(self, course: Course, workdir: Path, node_id: str, exercicio: str,
+                 dia: str | None = None) -> None:
+        self.course = course
+        self.estado_path = workdir / "estado.json"
+        self.workspace = Workspace(course, workdir)
+        self.node_id = node_id
+        self.exercicio = exercicio
+        self.dia = dia or date.today().isoformat()
+        self.atual: simulator_mod.Previsao | None = None
+
+    def proxima(self) -> simulator_mod.Previsao | None:
+        codigo = self.workspace.caminho(self.exercicio).read_text(encoding="utf-8")
+        previsoes = simulator_mod.gerar(self.course, self.exercicio, codigo, quantas=1)
+        self.atual = previsoes[0] if previsoes else None
+        return self.atual
+
+    def responder(self, texto: str) -> Resultado:
+        if self.atual is None:
+            raise CourseError("não há pergunta na mesa — pede a próxima previsão")
+        certo = simulator_mod.acertou(self.atual, texto)
+        st = state_mod.load(self.estado_path)
+        promocao = simulator_mod.registar(st, self.node_id, certo, date.fromisoformat(self.dia))
+        state_mod.save(self.estado_path, st)
+        resultado = Resultado(
+            certo=certo, certa=self.atual.saida_certa, promocao=promocao,
+            seguidas=st.node(self.node_id).previsoes_seguidas,
+            em_falta=simulator_mod.em_falta(st, self.node_id),
+        )
+        self.atual = None
+        return resultado

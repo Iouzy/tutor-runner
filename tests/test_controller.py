@@ -168,3 +168,40 @@ class TestEstudo(unittest.TestCase):
     def test_sem_sessao_a_decorrer_recusa_compilar(self):
         with self.assertRaises(CourseError):
             self.estudo.compilar()
+
+
+class TestSimulacao(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.work = Path(self.tmp.name)
+        self.curso = course_mod.load(RAIZ / "cursos" / "python")
+        from gradus.workspace import Workspace
+
+        Workspace(self.curso, self.work).criar(
+            "meu.py",
+            "total = 0\nfor i in range(1, 5):\n    if i < 3:\n        total = total + i\nprint(total)\n",
+        )
+        self.sim = controller.Simulacao(self.curso, self.work, "base-listas", "meu.py", dia="2026-09-18")
+        st = state_mod.State()
+        st.node("base-listas").dominio = Mastery.ESCRITO_SOZINHO
+        state_mod.save(self.work / "estado.json", st)
+
+    def test_a_pergunta_sai_do_ficheiro_e_a_correcao_da_maquina(self):
+        previsao = self.sim.proxima()
+        self.assertIsNotNone(previsao)
+        certo = self.sim.responder(previsao.saida_certa)
+        self.assertTrue(certo.certo)
+        self.assertEqual(certo.seguidas, 1)
+        self.assertEqual(certo.em_falta, 9)
+
+    def test_errar_põe_a_conta_a_zero_e_diz_a_certa(self):
+        previsao = self.sim.proxima()
+        r = self.sim.responder("seja o que for menos isso")
+        self.assertFalse(r.certo)
+        self.assertEqual(r.certa, previsao.saida_certa)
+        self.assertEqual(r.seguidas, 0)
+
+    def test_responder_sem_pergunta_na_mesa(self):
+        with self.assertRaises(CourseError):
+            self.sim.responder("3")

@@ -182,6 +182,40 @@ def cmd_abrir(args) -> int:
     return correr(RAIZ, trabalho, seco=args.seco)
 
 
+def cmd_simular(args) -> int:
+    """Dez previsões seguidas sobre o ficheiro dele. A resposta certa sai de correr."""
+    from .gui.controller import Simulacao
+
+    curso, _ = _course(args)
+    sim = Simulacao(curso, _work(args), args.no, args.ficheiro)
+    print(f"\n{BOLD}simulador{RESET} · {args.no} · {args.ficheiro}")
+    print(f"{DIM}dez seguidas certas levam o nó a automático — e nunca as dez no mesmo dia{RESET}\n")
+
+    while True:
+        previsao = sim.proxima()
+        if previsao is None:
+            print("não consegui mudar nada neste ficheiro que ainda corresse. Escreve mais um bocado.")
+            return 1
+        print(f"{BOLD}{previsao.pergunta}{RESET}")
+        print(f"{DIM}--- o ficheiro com a mudança ---{RESET}")
+        print(previsao.codigo.rstrip())
+        try:
+            resposta = input("\no que é que ele escreve? (enter vazio para sair)\n> ")
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return 0
+        if not resposta.strip():
+            return 0
+        r = sim.responder(resposta)
+        if r.certo:
+            print(f"{VERDE}certo{RESET} · {r.seguidas} seguidas, faltam {r.em_falta}\n")
+        else:
+            print(f"{VERM}não{RESET} — era: {r.certa}\n{DIM}a conta volta a zero{RESET}\n")
+        if r.promocao:
+            print(f"{LARANJA}{r.promocao}{RESET}\n")
+            return 0
+
+
 def cmd_doctor(args) -> int:
     """The only command that touches the machine. Every queixa traz o comando."""
     from . import doctor as doctor_mod
@@ -226,6 +260,10 @@ def main(argv: list[str] | None = None) -> int:
     a = sub.add_parser("abrir", help="abre a aplicação (é isto que o aluno usa)")
     a.add_argument("--seco", action="store_true", help="sem modelo nenhum: para ver a janela sem gastar uma sessão")
     a.set_defaults(func=cmd_abrir)
+    sm = sub.add_parser("simular", help="dez previsões sobre o código dele; o único caminho para automático")
+    sm.add_argument("--no", required=True, help="id do nó, ex.: base-listas")
+    sm.add_argument("--ficheiro", required=True, help="o exercício dele, em exercicios/")
+    sm.set_defaults(func=cmd_simular)
     sub.add_parser("doctor", help="a máquina aguenta este curso? com o comando do conserto").set_defaults(func=cmd_doctor)
     sub.add_parser("estado", help="regenera e mostra ESTADO.md").set_defaults(func=cmd_regenerar)
     sub.add_parser("historico", help="regenera e mostra HISTORICO.md").set_defaults(func=cmd_regenerar)

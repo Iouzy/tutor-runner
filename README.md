@@ -15,6 +15,7 @@ python3 -m gradus abrir --seco    # a mesma janela sem gastar uma sessão de mod
 python3 -m gradus demo --limpar   # um dia de estudo inteiro, sem modelo e sem rede
 python3 -m gradus proximo         # que exercício vem a seguir, e porquê
 python3 -m gradus briefing        # o contexto exato que a próxima sessão recebe
+python3 -m gradus simular --no base-listas --ficheiro MediaArray.java
 python3 -m gradus lint            # o que rebenta neste curso antes de o usar
 python3 -m gradus doctor          # a máquina aguenta-o? com o comando do conserto
 python3 -m gradus estado          # regenera ESTADO.md
@@ -81,8 +82,11 @@ derrubam a barreira de quem adia; a reescrita tem uma noite de esquecimento pelo
 meio, senão é copiar. O escalonador nunca dá duas construções do mesmo nó
 seguidas — prática em bloco ensina a forma da sessão, não o nó.
 
-Um exercício passado sobe **um** degrau. Só o simulador (dez previsões seguidas
-certas) leva um nó a `automático`. Ter commit não é saber.
+Um exercício passado sobe **um** degrau. Só o simulador leva um nó a
+`automático`: dez previsões seguidas certas, e nunca as dez no mesmo dia. As
+perguntas saem de uma mudança pequena no ficheiro que ele escreveu — um `<` que
+vira `<=`, um limite que muda — e a resposta certa sai de **correr o mutante**,
+nunca de perguntar a um modelo. Ter commit não é saber.
 
 ## Escrever um curso novo
 
